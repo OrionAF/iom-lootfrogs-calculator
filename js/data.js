@@ -70,6 +70,10 @@
 
   var BASE_POOL = 196; // sum of every listed weight except Frogurt
 
+  /* "Gems from Lootfrogs": +10% a level, 20 levels, so +200% at the top. */
+  var GEM_BONUS_MAX = 200;
+  var GEM_BONUS_STEP = 10;
+
   /* -----------------------------------------------------------------------
      Player stats. `def` is the value used when the field is blank or 0.
      ----------------------------------------------------------------------- */
@@ -209,6 +213,8 @@
     RESOURCE_ORDER: RESOURCE_ORDER,
     REWARDS: REWARDS,
     BASE_POOL: BASE_POOL,
+    GEM_BONUS_MAX: GEM_BONUS_MAX,
+    GEM_BONUS_STEP: GEM_BONUS_STEP,
     STAT_DEFS: STAT_DEFS,
     FROG_TYPES: FROG_TYPES,
     SIZE_LABEL: SIZE_LABEL,

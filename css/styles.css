@@ -541,6 +541,23 @@ button:disabled {
   letter-spacing: 0;
 }
 
+select {
+  font-family: var(--mono);
+  font-size: 1rem;
+  background: var(--sunk);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r);
+  color: var(--bone);
+  padding: .6rem .5rem;
+  width: 100%;
+  min-height: 46px;
+  cursor: pointer;
+}
+
+select:hover { border-color: var(--bone-3); }
+select:focus { border-color: var(--acid); outline: none; }
+select:focus-visible { outline: 2px solid var(--acid); outline-offset: 2px; }
+
 input[type="number"], input[type="text"], textarea {
   font-family: var(--mono);
   font-size: 1rem;
@@ -552,6 +569,9 @@ input[type="number"], input[type="text"], textarea {
   width: 100%;
   transition: border-color .15s, box-shadow .15s;
 }
+
+/* Same height as the select beside it in the launch row. */
+input[type="number"], input[type="text"] { min-height: 46px; }
 
 input:hover, textarea:hover { border-color: var(--bone-3); }
 
@@ -866,7 +886,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   position: relative;
   overflow: hidden;
   opacity: 0;
-  transition: opacity .33s, height .55s cubic-bezier(.4, 0, .2, 1);
+  transition: opacity calc(.33s * var(--show-speed, 1)), height calc(.55s * var(--show-speed, 1)) cubic-bezier(.4, 0, .2, 1);
 }
 
 .theatre-grid.is-in { opacity: 1; }
@@ -945,7 +965,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
     repeating-linear-gradient(90deg, var(--rule-soft) 0 1px, transparent 1px 22px),
     var(--sunk);
   opacity: 0;
-  transition: height .6s cubic-bezier(.2, .8, .3, 1), opacity .33s;
+  transition: height calc(.6s * var(--show-speed, 1)) cubic-bezier(.2, .8, .3, 1), opacity calc(.33s * var(--show-speed, 1));
 }
 
 .theatre-bowl.is-open { opacity: 1; border-top-width: var(--hair); }
@@ -967,7 +987,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   top: 0;
   width: 0;
   height: 0;
-  transition: transform .55s cubic-bezier(.2, .8, .3, 1);
+  transition: transform calc(.55s * var(--show-speed, 1)) cubic-bezier(.2, .8, .3, 1);
   will-change: transform;
 }
 
@@ -980,16 +1000,23 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   /* The collision shape is the circle inscribed in this box — see
      packCircles — but it stays invisible: no clipping, so hats and tails
      are never cropped, and frogs nest rather than colliding as rectangles. */
-  transition: width .5s cubic-bezier(.2, .8, .3, 1), height .5s cubic-bezier(.2, .8, .3, 1);
+  transition: width calc(.5s * var(--show-speed, 1)) cubic-bezier(.2, .8, .3, 1), height calc(.5s * var(--show-speed, 1)) cubic-bezier(.2, .8, .3, 1);
 }
 
 .tf.is-hidden { opacity: 0; }
 
 /* Between Frogspawn: the previous catch steps out of the cells but stays in
    the layer, so the mass drop into the bowl still comes from the grid. */
-.tf.is-stowed { opacity: 0; transition: opacity .3s, transform .55s cubic-bezier(.2, .8, .3, 1); }
-.tf.is-drop { animation: frogDrop .33s ease-out both; }
-.tf.is-falling { transition: transform .94s cubic-bezier(.3, .05, .2, 1); }
+/* animation: none matters — the reveal's frogDrop is filled forwards, and a
+   filled animation outranks a plain opacity declaration, so without this a
+   stowed frog would stay fully visible on the grid. */
+.tf.is-stowed {
+  opacity: 0;
+  animation: none !important;
+  transition: opacity calc(.3s * var(--show-speed, 1)), transform calc(.55s * var(--show-speed, 1)) cubic-bezier(.2, .8, .3, 1);
+}
+.tf.is-drop { animation: frogDrop calc(.33s * var(--show-speed, 1)) ease-out both; }
+.tf.is-falling { transition: transform calc(.94s * var(--show-speed, 1)) cubic-bezier(.3, .05, .2, 1); }
 
 @keyframes frogDrop {
   from { opacity: 0; }
@@ -1003,7 +1030,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
 
 /* Popping animates the image, never the .tf anchor — the anchor's transform
    is the sprite's position and must not be clobbered by a keyframe. */
-.tf.is-pop img { animation: frogPop .4s cubic-bezier(.3, .9, .4, 1) both; }
+.tf.is-pop img { animation: frogPop calc(.4s * var(--show-speed, 1)) cubic-bezier(.3, .9, .4, 1) both; }
 
 @keyframes frogPop {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -1601,9 +1628,9 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   .frog-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 
-  .launch-row { flex-direction: row; align-items: flex-end; }
-  .spawn-field { width: 130px; flex: none; }
-  .spawn-btn { width: auto; flex: 1; max-width: 420px; }
+  .launch-row { flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
+  .spawn-field { width: 132px; flex: none; }
+  .spawn-btn { width: auto; flex: 1; min-width: 260px; max-width: 420px; }
 
   .tab { padding: .8rem 1.1rem; }
   .footer-inner { flex-direction: row; justify-content: space-between; gap: 1.5rem; }

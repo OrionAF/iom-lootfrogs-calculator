@@ -135,6 +135,19 @@
           <span class="field-label">Frogspawn to use</span>
           <input type="number" id="spawnCount" value="1" min="1" max="1000" step="1" inputmode="numeric">
         </label>
+        <label class="field spawn-field">
+          <span class="field-label">Gem bonus <span class="unit">%</span></span>
+          <input type="number" id="optGemBonus" value="0" min="0" max="200" step="10" inputmode="numeric">
+        </label>
+        <label class="field spawn-field">
+          <span class="field-label">Show speed</span>
+          <select id="optSpeed">
+            <option value="0.7">Fast</option>
+            <option value="1">Normal</option>
+            <option value="1.4" selected>Slow</option>
+            <option value="2">Slower</option>
+          </select>
+        </label>
         <button type="button" class="spawn-btn" id="spawnBtn">
           <img src="https://static.wikitide.net/shminerwiki/5/5f/Frogspawn.png" alt="" class="spawn-btn-icon" data-fallback="🥚">
           <span id="spawnBtnLabel">Use 1 Frogspawn</span>

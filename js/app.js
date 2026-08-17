@@ -169,6 +169,8 @@
   function readOptions() {
     return {
       frogurtOneIn: parseFloat($('#optFrogurt').value) || D.BASE_POOL,
+      gemBonus: parseFloat($('#optGemBonus').value) || 0,
+      speed: parseFloat($('#optSpeed').value) || 1,
       seed: $('#optSeed').value.trim()
     };
   }
@@ -286,6 +288,8 @@
       var opts = JSON.parse(localStorage.getItem(STORE.options) || 'null');
       if (opts) {
         if (opts.frogurtOneIn) $('#optFrogurt').value = opts.frogurtOneIn;
+        if (isFinite(opts.gemBonus)) $('#optGemBonus').value = opts.gemBonus;
+        if (opts.speed) $('#optSpeed').value = String(opts.speed);
         if (opts.seed) $('#optSeed').value = opts.seed;
       }
 
@@ -404,6 +408,7 @@
     Theatre.play({
       run: run,
       els: theatreEls(),
+      speed: readOptions().speed,
       onDone: function () {
         state.animating = false;
         Theatre.hide(theatreEls());
@@ -1079,7 +1084,7 @@
       parseJsonInput();
     });
 
-    ['#optFrogurt', '#optSeed'].forEach(function (sel) {
+    ['#optFrogurt', '#optSeed', '#optGemBonus', '#optSpeed'].forEach(function (sel) {
       $(sel).addEventListener('input', onStatsChanged);
       $(sel).addEventListener('change', onStatsChanged);
     });

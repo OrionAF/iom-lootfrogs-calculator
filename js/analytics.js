@@ -76,7 +76,8 @@
    * Exhaustive stats for one reward on one frog type: every base value in
    * [min,max] is equally likely, so enumerate and apply floor + cap.
    */
-  function quantityStats(reward, multiplier, size) {
+  function quantityStats(reward, multiplier, size, cfg) {
+    if (cfg) multiplier = Sim.rewardMultiplier(cfg, reward, multiplier);
     var n = reward.max - reward.min + 1;
     var sum = 0;
     var lo = Infinity;
@@ -122,7 +123,7 @@
 
     return types.map(function (type) {
       var rows = probs.map(function (entry) {
-        var q = quantityStats(entry.reward, type.multiplier, type.size);
+        var q = quantityStats(entry.reward, type.multiplier, type.size, cfg);
         return {
           reward: entry.reward,
           p: entry.p,

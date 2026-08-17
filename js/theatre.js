@@ -51,28 +51,29 @@
   var PACK_PAD = 2.5;       // absorbs the rounding in place(), so no visible kiss
   var PACK_EPS = 0.6;       // settled enough to stop relaxing
 
-  /* One dial for the whole show: above 1 slows everything down. */
+  /* Baseline tempo. The reader's Show speed multiplies all of it, and the
+     same multiplier reaches the stylesheet as --show-speed so the CSS
+     transitions stretch with the script rather than against it. */
   var SPEED = 1.1;
 
-  var T = {
+  var T_BASE = {
     grid: 420,
     fall: 950,
     grow: 640,
     gild: 640,
     pop: 700
   };
-  Object.keys(T).forEach(function (k) { T[k] = Math.round(T[k] * SPEED); });
 
   /* Natural per-column tempo: one Frogspawn always plays at this pace. */
-  var STEP_BASE = Math.round(45 * SPEED);
-  var STEP_ROLL = Math.round(66 * SPEED);
-  var STEP_SETTLE = Math.round(260 * SPEED);
+  var STEP_BASE = 45;
+  var STEP_ROLL = 66;
+  var STEP_SETTLE = 260;
 
   /* The grid cycles once per Frogspawn, so several would otherwise take
      several times as long. Past the budget the cycles compress, down to a
      floor that keeps each one readable. */
-  var GRID_BUDGET = Math.round(6000 * SPEED);
-  var USE_MIN = Math.round(430 * SPEED);
+  var GRID_BUDGET_BASE = 6000;
+  var USE_MIN_BASE = 430;
 
   var timers = [];
   var running = false;
@@ -291,6 +292,15 @@
     var rand = opts.rand || Math.random;
     var frogs = opts.run.frogs;
     var uses = toUses(frogs);
+
+    var speed = SPEED * (opts.speed > 0 ? opts.speed : 1);
+    var T = {};
+    Object.keys(T_BASE).forEach(function (k) { T[k] = Math.round(T_BASE[k] * speed); });
+    var STEP_B = Math.round(STEP_BASE * speed);
+    var STEP_R = Math.round(STEP_ROLL * speed);
+    var STEP_S = Math.round(STEP_SETTLE * speed);
+    var GRID_BUDGET = Math.round(GRID_BUDGET_BASE * speed);
+    var USE_MIN = Math.round(USE_MIN_BASE * speed);
     /* Every Frogspawn rolls the same number of columns, so the first one
        sizes the grid and the rest reuse it. */
     var columns = toColumns(uses[0].frogs);
@@ -301,6 +311,7 @@
        not the card, so padding is already excluded. */
     els.root.hidden = false;
     els.root.classList.remove('is-bowl');
+    els.root.style.setProperty('--show-speed', String(opts.speed > 0 ? opts.speed : 1));
 
     var availW = Math.max(240, els.stage.clientWidth || els.root.clientWidth || 900);
     var colW = Math.max(COL_MIN, Math.min(COL_MAX,
@@ -404,13 +415,13 @@
     /* A single Frogspawn runs at the natural tempo. More than one compresses
        to fit the budget, but never below the floor that keeps a cycle
        readable — so the show grows with use count, just far more slowly. */
-    var natural = columns.length * (STEP_BASE + 2 * STEP_ROLL) + 2 * STEP_SETTLE;
+    var natural = columns.length * (STEP_B + 2 * STEP_R) + 2 * STEP_S;
     var scale = Math.min(1, GRID_BUDGET / (natural * uses.length));
     scale = Math.max(scale, Math.min(1, USE_MIN / natural));
 
-    var baseStep = Math.max(4, Math.round(STEP_BASE * scale));
-    var rollStep = Math.max(4, Math.round(STEP_ROLL * scale));
-    var settle = Math.max(40, Math.round(STEP_SETTLE * scale));
+    var baseStep = Math.max(4, Math.round(STEP_B * scale));
+    var rollStep = Math.max(4, Math.round(STEP_R * scale));
+    var settle = Math.max(40, Math.round(STEP_S * scale));
     var many = uses.length > 1;
 
     var t = 0;
@@ -430,6 +441,7 @@
         if (u > 0) {
           var prev = uses[u - 1];
           for (var i = 0; i < prev.frogs.length; i++) {
+            sprites[prev.offset + i].el.classList.remove('is-drop');
             sprites[prev.offset + i].el.classList.add('is-stowed');
           }
         }

@@ -82,6 +82,18 @@ total = Lootfrog Loot Multiplier
 
 Massive spawns out of Big, so a Massive frog gets both multipliers (base ×5 × ×3 = ×15).
 
+### Gems from Lootfrogs
+
+The **Gems from Lootfrogs** upgrade adds +10% a level over 20 levels, so +200% at the top.
+It scales gem rewards only, multiplying on top of whatever the frog itself is worth:
+
+```
+gem quantity = floor(base × frog multiplier × (1 + bonus))
+```
+
+Set it beside the spawn button, in 10% steps and capped at 200%. It feeds the Probabilities
+tab as well as the simulator, and leaves every non-gem reward untouched.
+
 Rolled quantities are `floor(base × total)`, never below 1.
 
 ### Caps
@@ -152,8 +164,12 @@ every Frogspawn drops into the bowl together. The phase label reads `Frogspawn 3
 always know where you are.
 
 Cycles share a time budget, so eight Frogspawn is not eight times the wait — one runs at
-the natural tempo (~9s end to end), sixteen at ~13s, compressing only as far as a floor
-that keeps each cycle readable.
+the natural tempo, sixteen only a little longer, compressing as far as a floor that keeps
+each cycle readable.
+
+**Show speed** beside the button sets the tempo (Fast / Normal / Slow / Slower, defaulting
+to Slow) and persists. It scales the script and reaches the stylesheet as `--show-speed`,
+so the CSS transitions stretch with it rather than against it.
 
 The show is capped by expected **frog count**, not use count, since the bowl packs every
 frog at once — about 11 Frogspawn at capacity 19. Past that, or above 60 columns, or with

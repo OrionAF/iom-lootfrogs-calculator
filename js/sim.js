@@ -73,7 +73,7 @@
   /**
    * Turn raw stat values into everything the simulator and the odds tab need.
    * @param {Object} stats  keyed by the game's JSON stat names
-   * @param {Object} [opts] { frogurtOneIn, seed }
+   * @param {Object} [opts] { frogurtOneIn, gemBonus, seed }
    */
   function buildConfig(stats, opts) {
     stats = stats || {};
@@ -91,9 +91,13 @@
       bigMulti: num(stats.lootfrog_big_multi, 5),
       massiveChance: pct(stats.lootfrog_massive_chance),
       massiveMulti: num(stats.lootfrog_massive_multi, 3),
-      frogurtOneIn: Math.max(1, num(opts.frogurtOneIn, D.BASE_POOL))
+      frogurtOneIn: Math.max(1, num(opts.frogurtOneIn, D.BASE_POOL)),
+      /* "Gems from Lootfrogs", +10% a level to +200% at level 20. It scales
+         gem rewards only, on top of whatever the frog itself is worth. */
+      gemBonus: Math.min(D.GEM_BONUS_MAX, Math.max(0, num(opts.gemBonus, 0)))
     };
 
+    cfg.gemMulti = 1 + cfg.gemBonus / 100;
     cfg.rewards = buildRewardPool(cfg.frogurtOneIn);
     cfg.totalWeight = cfg.rewards.reduce(function (sum, r) { return sum + r.weight; }, 0);
     return cfg;
@@ -179,14 +183,20 @@
     return qty;
   }
 
+  /** The frog's own multiplier, plus the gem upgrade where it applies. */
+  function rewardMultiplier(cfg, reward, frogMulti) {
+    return reward.res === 'gems' ? frogMulti * cfg.gemMulti : frogMulti;
+  }
+
   function rollLoot(cfg, frog, rng) {
     var reward = pickReward(cfg, rng);
     var base = randInt(rng, reward.min, reward.max);
+    var multiplier = rewardMultiplier(cfg, reward, frog.multiplier);
     return {
       reward: reward,
       base: base,
-      qty: applyMultiplier(reward, frog.multiplier, frog.size, base),
-      capped: !!(reward.caps && Math.floor(base * frog.multiplier) > reward.caps[frog.size])
+      qty: applyMultiplier(reward, multiplier, frog.size, base),
+      capped: !!(reward.caps && Math.floor(base * multiplier) > reward.caps[frog.size])
     };
   }
 
@@ -264,6 +274,7 @@
     buildConfig: buildConfig,
     buildRewardPool: buildRewardPool,
     frogMultiplier: frogMultiplier,
+    rewardMultiplier: rewardMultiplier,
     frogTypeKey: frogTypeKey,
     rollFrog: rollFrog,
     rollGroupSize: rollGroupSize,
