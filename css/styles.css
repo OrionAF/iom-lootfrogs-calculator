@@ -1007,9 +1007,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .tf, .tf img, .theatre-bowl, .theatre-grid { transition: none !important; }
-}
+/* Silenced by the global [data-motion="off"] rule near the end of the file. */
 
 /* ------------------------------------------------------ run filters -- */
 
@@ -1620,15 +1618,20 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   .btn-text { display: none; }
 }
 
-/* Keep the information, drop the motion. */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .001ms !important;
-  }
-  html { scroll-behavior: auto; }
+/* Keep the information, drop the motion.
+
+   Driven by the header switch rather than by prefers-reduced-motion: the
+   switch defaults to on for everyone and is an opt-out, so this is the one
+   place that decides whether anything moves. See js/motion.js. */
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
 }
+
+:root[data-motion="off"] { scroll-behavior: auto; }
 
 /* Ink on paper, always. */
 @media print {

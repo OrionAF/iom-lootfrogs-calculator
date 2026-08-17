@@ -359,24 +359,25 @@
     };
   }
 
-  function prefersReducedMotion() {
-    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  /* The header switch, not the OS preference — see js/motion.js. */
+  function motionEnabled() {
+    return document.documentElement.getAttribute('data-motion') !== 'off';
   }
 
   function wantsTheatre(cfg, uses) {
     return !!Theatre &&
       uses === 1 &&
       cfg.capacity <= THEATRE_MAX_COLUMNS &&
-      !prefersReducedMotion();
+      motionEnabled();
   }
 
   function theatreSkipReason(cfg, uses) {
     if (!Theatre) return '';
+    if (!motionEnabled()) return 'Motion is switched off in the header.';
     if (uses !== 1) return 'Set this to 1 to watch the spawn play out.';
     if (cfg.capacity > THEATRE_MAX_COLUMNS) {
       return 'Capacity above ' + THEATRE_MAX_COLUMNS + ' is too wide to animate.';
     }
-    if (prefersReducedMotion()) return 'Reduced motion is on, so the spawn animation is off.';
     return '';
   }
 
@@ -1151,6 +1152,10 @@
     guardStaticIcons();
     restore();
     wire();
+
+    /* The launch note states whether the spawn show will play, so the motion
+       switch needs a way to have it redrawn the moment it is flipped. */
+    global.LFRefreshLaunchNote = function () { renderLaunchNote(currentConfig()); };
 
     updateSpawnButton();
     onStatsChanged();

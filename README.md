@@ -134,6 +134,7 @@ js/sim.js           config building, seeded RNG, the simulation
 js/analytics.js     exact probability maths for the Probabilities tab
 js/theatre.js       the spawn show — column grid, bowl packing, growth, gilding
 js/theme.js         press / newsprint theme toggle
+js/motion.js        the motion switch
 js/app.js           UI wiring, results grid, filters, saved totals
 ```
 
@@ -146,8 +147,9 @@ to know exactly which frogs belong to which row.
 
 It runs only for a **single Frogspawn**. There is one grid per Frogspawn, so 50 of them
 would mean 50 grids and thousands of sprites; bulk runs go straight to the reward grid, as
-do capacities above 60 columns and visitors with `prefers-reduced-motion`. **Skip
-animation** cuts it short at any point.
+do capacities above 60 columns and anyone who has switched **Motion** off. **Skip
+animation** cuts it short at any point. Whenever the show is skipped the launch note says
+why, rather than leaving you to guess.
 
 Grid, bowl and sprite layer share one coordinate space: during the grid phase the grid
 holds the origin, and when it collapses to zero height the bowl inherits it. Falling into
@@ -176,6 +178,18 @@ It ships in two stocks: **press** (dark ink, the default) and **newsprint**
 (light). The toggle in the header stores your choice in `localStorage`; with
 nothing stored it follows `prefers-color-scheme`. Every colour is a custom
 property on `:root`, so a theme is a variable swap and nothing more.
+
+### Motion
+
+**Motion** in the header is the single switch governing whether anything moves — the spawn
+show and every CSS transition alike, via `:root[data-motion]`.
+
+It is deliberately **on by default for everyone, including visitors whose OS reports
+`prefers-reduced-motion`**, and is an opt-out rather than an opt-in. The reasoning: most
+people who turn Windows animation effects off did so for battery or performance and still
+want to watch the spawn, and a visible off switch in the header is easier to find than the
+OS setting is to reconsider. That is a deliberate trade — the usual advice is to honour the
+OS preference by default — so the switch is kept prominent and its state persists.
 
 Fonts load from Google Fonts, so an offline copy falls back to system faces —
 the layout holds either way.

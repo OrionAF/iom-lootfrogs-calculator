@@ -17,11 +17,16 @@
      half-old code. -->
 <link rel="stylesheet" href="css/styles.css?v=dev">
 <script>
-  /* Paint the stored theme before first paint so the page never flashes. */
+  /* Settle theme and motion before first paint so the page never flashes.
+     Motion defaults to on; only an explicit opt-out turns it off. */
   try {
     var t = localStorage.getItem('frogspawn.theme');
     if (t) document.documentElement.setAttribute('data-theme', t);
-  } catch (e) { /* noop */ }
+    var m = localStorage.getItem('frogspawn.motion');
+    document.documentElement.setAttribute('data-motion', m === 'off' ? 'off' : 'on');
+  } catch (e) {
+    document.documentElement.setAttribute('data-motion', 'on');
+  }
 </script>
 </head>
 <body>
@@ -49,6 +54,9 @@
       </div>
     </div>
     <div class="header-actions">
+      <button type="button" class="ghost-btn small" id="motionToggle" aria-pressed="true" title="Animation is on — click to turn it off">
+        <span class="icon-slot" id="motionIcon">▶</span><span class="btn-text">Motion</span>
+      </button>
       <button type="button" class="ghost-btn small" id="themeToggle" title="Switch between press and newsprint">
         <span class="icon-slot" id="themeIcon">◐</span><span class="btn-text">Theme</span>
       </button>
@@ -284,6 +292,7 @@
 <script src="js/analytics.js?v=dev"></script>
 <script src="js/theatre.js?v=dev"></script>
 <script src="js/theme.js?v=dev"></script>
+<script src="js/motion.js?v=dev"></script>
 <script src="js/app.js?v=dev"></script>
 </body>
 </html>
