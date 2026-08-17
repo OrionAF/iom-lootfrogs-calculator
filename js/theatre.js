@@ -187,35 +187,68 @@
     /* Biggest first: they have the least room to manoeuvre, so letting them
        claim space before the small ones settle avoids stranding one. */
     var order = bodies.slice().sort(function (m, n) { return n.pr - m.pr; });
+    var n = order.length;
+    for (i = 0; i < n; i++) order[i].idx = i;
 
-    var worst;
+    /* Broad phase. Two circles can only touch if their centres are within
+       the largest diameter, so a grid of that cell size means each one need
+       only look at its own cell and the eight around it. Comparing every
+       pair is what made big crowds quadratic and unusable. */
+    var maxR = 0;
+    for (i = 0; i < n; i++) if (order[i].pr > maxR) maxR = order[i].pr;
+    var cell = Math.max(8, maxR * 2);
+    var cols = Math.max(1, Math.ceil(width / cell) + 1);
+    var rows = Math.max(1, Math.ceil(height / cell) + 1);
+    var head = new Int32Array(cols * rows);
+    var next = new Int32Array(n);
+    var cx, cy, gx, gy, k, worst;
+
     for (iter = 0; iter < PACK_ITERATIONS; iter++) {
-      worst = 0;
-      for (i = 0; i < order.length; i++) {
+      head.fill(-1);
+      for (i = 0; i < n; i++) {
         a = order[i];
-        for (j = i + 1; j < order.length; j++) {
-          b = order[j];
-          dx = b.px - a.px;
-          dy = b.py - a.py;
-          d = Math.sqrt(dx * dx + dy * dy);
-          overlap = a.pr + b.pr - d;
-          if (overlap <= 0) continue;
-          if (overlap > worst) worst = overlap;
-          if (d < 0.0001) { dx = rand() - 0.5; dy = rand() - 0.5; d = 1; }
-          push = overlap / d / 2;
-          a.px -= dx * push;
-          a.py -= dy * push;
-          b.px += dx * push;
-          b.py += dy * push;
+        cx = Math.min(cols - 1, Math.max(0, Math.floor(a.px / cell)));
+        cy = Math.min(rows - 1, Math.max(0, Math.floor(a.py / cell)));
+        a.cx = cx;
+        a.cy = cy;
+        k = cy * cols + cx;
+        next[i] = head[k];
+        head[k] = i;
+      }
+
+      worst = 0;
+      for (i = 0; i < n; i++) {
+        a = order[i];
+        for (gy = a.cy - 1; gy <= a.cy + 1; gy++) {
+          if (gy < 0 || gy >= rows) continue;
+          for (gx = a.cx - 1; gx <= a.cx + 1; gx++) {
+            if (gx < 0 || gx >= cols) continue;
+            for (j = head[gy * cols + gx]; j !== -1; j = next[j]) {
+              if (j <= i) continue;          // resolve each pair once
+              b = order[j];
+              dx = b.px - a.px;
+              dy = b.py - a.py;
+              d = Math.sqrt(dx * dx + dy * dy);
+              overlap = a.pr + b.pr - d;
+              if (overlap <= 0) continue;
+              if (overlap > worst) worst = overlap;
+              if (d < 0.0001) { dx = rand() - 0.5; dy = rand() - 0.5; d = 1; }
+              push = overlap / d / 2;
+              a.px -= dx * push;
+              a.py -= dy * push;
+              b.px += dx * push;
+              b.py += dy * push;
+            }
+          }
         }
       }
-      for (i = 0; i < order.length; i++) {
+
+      for (i = 0; i < n; i++) {
         a = order[i];
         a.px = Math.max(a.pr, Math.min(Math.max(a.pr, width - a.pr), a.px));
         a.py = Math.max(a.pr, Math.min(Math.max(a.pr, height - a.pr), a.py));
       }
-      /* Stop as soon as the layout has settled. The fixed iteration count
-         was the bottleneck at scale, and the remaining slack lives in
+      /* Stop as soon as the layout has settled. The remaining slack lives in
          PACK_PAD, which also absorbs the rounding in place(). */
       if (worst < PACK_EPS) break;
     }

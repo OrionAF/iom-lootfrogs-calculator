@@ -871,6 +871,18 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
 
 /* ---------------------------------------------------------- theatre -- */
 
+/* The show breaks out of the centred column. Bowl height is area over width,
+   so every extra pixel of width buys height back — and the grid fits more
+   columns before it has to scroll. Negative margins keep it centred, and
+   body already hides overflow-x so the 100vw term cannot raise a scrollbar. */
+.theatre {
+  --bleed: max(100%, min(1880px, calc(100vw - 2rem)));
+  width: var(--bleed);
+  margin-left: calc((100% - var(--bleed)) / 2);
+  margin-right: calc((100% - var(--bleed)) / 2);
+  overflow: hidden;
+}
+
 /* The stage scrolls sideways when capacity outruns the panel, rather than
    forcing the whole page to. Grid, bowl and sprites scroll together. */
 .theatre-stage {

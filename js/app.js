@@ -350,9 +350,10 @@
      the bowl packs every frog at once and the sprites are all real DOM, so
      the show is capped on the expected total rather than on the use count. */
   var THEATRE_MAX_COLUMNS = 60;
-  /* Packing is O(n^2) per growth step, so this is set where the worst case
-     stays a blink rather than a hitch — roughly 11 Frogspawn at capacity 19. */
-  var THEATRE_MAX_FROGS = 320;
+  /* Packing stopped being the limit once the solver gained a broad phase, so
+     this is now about how tall the bowl gets and how long you are asked to
+     watch — roughly 29 Frogspawn at capacity 19. */
+  var THEATRE_MAX_FROGS = 800;
 
   function theatreFrogEstimate(cfg, uses) {
     return An.expectedFrogsPerUse(cfg) * uses;

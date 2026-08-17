@@ -171,11 +171,16 @@ each cycle readable.
 to Slow) and persists. It scales the script and reaches the stylesheet as `--show-speed`,
 so the CSS transitions stretch with it rather than against it.
 
+The show breaks out of the centred column and takes the full window width, up to 1880px.
+That is not only for looks: bowl height is area over width, so every extra pixel of width
+buys height back, and the grid fits more columns before it has to scroll.
+
 The show is capped by expected **frog count**, not use count, since the bowl packs every
-frog at once — about 11 Frogspawn at capacity 19. Past that, or above 60 columns, or with
-**Motion** switched off, the run goes straight to the reward grid, and the launch note says
-which of those applied rather than leaving you to guess. **Skip animation** cuts it short
-at any point.
+frog at once — about 29 Frogspawn at capacity 19. What binds is no longer compute but how
+tall the bowl gets and how long you are asked to watch: 29 Frogspawn is ~800 frogs, a
+~2000px bowl and a 20s show. Past that, or above 60 columns, or with **Motion** switched
+off, the run goes straight to the reward grid, and the launch note says which of those
+applied rather than leaving you to guess. **Skip animation** cuts it short at any point.
 
 Grid, bowl and sprite layer share one coordinate space: during the grid phase the grid
 holds the origin, and when it collapses to zero height the bowl inherits it. Falling into
@@ -187,10 +192,12 @@ of colliding as rectangles, and the art is never cropped. The solver relaxes ove
 clamps to the bowl, and CSS transitions carry frogs to the result; re-packing after each
 growth step is what makes a frog swelling to Massive visibly shove its neighbours aside.
 
-Relaxation stops as soon as the layout settles rather than running a fixed number of
-passes. That matters at scale: the pass count, not the pair loop, was the bottleneck, and
-the early exit took the worst case from ~2.1s to a few hundred ms without letting a single
-overlap through.
+Two things keep it fast enough to run on a crowd. Relaxation stops as soon as the layout
+settles rather than running a fixed number of passes. And a **broad phase** means each frog
+only compares against the eight cells around it: two circles can only touch if their centres
+are within the largest diameter, so a grid of that cell size makes the comparison local
+instead of all-pairs. Together they took 1,200 frogs from ~4.9s per pass to ~130ms, without
+letting a single overlap through.
 
 Sprites are the wiki's 66 Lootfrog portraits, each with a gilded twin at the same index, so
 a frog keeps its identity when Golden lands. Native art is 32×33, drawn at 48×50 basic,
