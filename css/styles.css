@@ -843,6 +843,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
 .stat-tile.gold .v { color: var(--brass-text); }
 .stat-tile.big .v { color: var(--mint); }
 .stat-tile.massive .v { color: var(--ember); }
+.stat-tile.spawn .v { color: var(--iris); }
 
 .results-head {
   display: flex;

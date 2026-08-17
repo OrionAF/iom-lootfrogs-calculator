@@ -234,7 +234,23 @@
     return frogs;
   }
 
-  /** @returns {{frogs, totals, byType, byReward, frogCount, uses, cfg}} */
+  /**
+   * How many columns won a multi-spawn. Every frog carries its column's size
+   * and the columns are stored base-first, so stepping by `groupSize` walks
+   * column to column — 3 and 12 won the Triple, 10 and 12 won the 10x.
+   */
+  function countSpawns(frogs) {
+    var spawns = { columns: 0, triple: 0, tenx: 0 };
+    for (var i = 0; i < frogs.length; i += frogs[i].groupSize) {
+      var size = frogs[i].groupSize;
+      spawns.columns++;
+      if (size === 3 || size === 12) spawns.triple++;
+      if (size === 10 || size === 12) spawns.tenx++;
+    }
+    return spawns;
+  }
+
+  /** @returns {{frogs, totals, byType, byReward, spawns, frogCount, uses, cfg}} */
   function simulateRun(cfg, uses, rng) {
     rng = rng || Math.random;
     var frogs = [];
@@ -264,6 +280,7 @@
       totals: totals,
       byType: byType,
       byReward: byReward,
+      spawns: countSpawns(frogs),
       cfg: cfg
     };
   }
@@ -278,6 +295,7 @@
     frogTypeKey: frogTypeKey,
     rollFrog: rollFrog,
     rollGroupSize: rollGroupSize,
+    countSpawns: countSpawns,
     pickReward: pickReward,
     applyMultiplier: applyMultiplier,
     simulateUse: simulateUse,

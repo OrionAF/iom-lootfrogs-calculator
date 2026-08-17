@@ -423,13 +423,16 @@
     var golden = t.basic_gold + t.big_gold + t.massive_gold;
     var big = t.big + t.big_gold;
     var massive = t.massive + t.massive_gold;
+    var s = run.spawns;
 
     var tiles = [
       { k: 'Frogspawn used', v: fmtInt(run.uses), cls: '' },
       { k: 'Lootfrogs', v: fmtInt(run.frogCount), cls: 'frog' },
       { k: 'Golden', v: fmtInt(golden), cls: 'gold' },
       { k: 'Big', v: fmtInt(big), cls: 'big' },
-      { k: 'Massive', v: fmtInt(massive), cls: 'massive' }
+      { k: 'Massive', v: fmtInt(massive), cls: 'massive' },
+      { k: '3x spawns', v: fmtInt(s.triple), cls: 'spawn' },
+      { k: '10x spawns', v: fmtInt(s.tenx), cls: 'spawn' }
     ];
 
     $('#runStats').innerHTML = tiles.map(function (tile) {
