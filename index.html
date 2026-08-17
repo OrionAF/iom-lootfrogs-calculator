@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frogspawn Loot Calculator</title>
+<meta name="description" content="Simulate Frogspawn loot and study Lootfrog drop odds for Idle Ore Miner.">
+<link rel="preconnect" href="https://static.wikitide.net">
+<link rel="icon" href="https://static.wikitide.net/shminerwiki/5/5f/Frogspawn.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="bg-glow" aria-hidden="true"></div>
+
+<header class="app-header">
+  <div class="wrap header-inner">
+    <div class="brand">
+      <img class="brand-icon" data-fallback="🥚" src="https://static.wikitide.net/shminerwiki/5/5f/Frogspawn.png" alt="">
+      <div>
+        <h1>Frogspawn Loot Calculator</h1>
+        <p class="tagline">Pop the spawn. Count the frogs. Do the maths.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="ghost-btn" id="soundToggle" aria-pressed="false" title="Toggle sound effects">
+        <span class="icon-slot" data-on="🔊" data-off="🔇">🔇</span><span class="btn-text">Sound</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============================== STATS ============================== -->
+  <section class="card stats-card" id="statsCard">
+    <button type="button" class="card-head" id="statsToggle" aria-expanded="true" aria-controls="statsBody">
+      <h2>Your Lootfrog Stats</h2>
+      <span class="stats-summary" id="statsSummary"></span>
+      <span class="chev" aria-hidden="true">▾</span>
+    </button>
+
+    <div class="card-body" id="statsBody">
+      <div class="mode-switch" role="tablist" aria-label="Stat entry mode">
+        <button type="button" role="tab" class="mode-btn is-active" data-mode="manual" aria-selected="true">Manual entry</button>
+        <button type="button" role="tab" class="mode-btn" data-mode="json" aria-selected="false">Paste game JSON</button>
+      </div>
+
+      <div class="mode-panel is-active" id="modeManual">
+        <div class="stat-grid" id="statGrid"><!-- built by app.js --></div>
+      </div>
+
+      <div class="mode-panel" id="modeJson">
+        <p class="hint">Paste your exported stats from the game. Only the ten <code>lootfrog_*</code> keys are read; everything else is ignored.</p>
+        <textarea id="jsonInput" rows="8" spellcheck="false" placeholder='{ "version": "v2.2.6", "stats": { "lootfrog_capacity": 19, ... } }'></textarea>
+        <div class="row-actions">
+          <button type="button" class="primary-btn small" id="jsonParse">Load stats from JSON</button>
+          <button type="button" class="ghost-btn small" id="jsonExample">Use example stats</button>
+          <span class="parse-status" id="parseStatus" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced modelling options</summary>
+        <div class="advanced-grid">
+          <label class="check">
+            <input type="checkbox" id="optOverflow" checked>
+            <span>
+              <strong>Allow spawn overflow</strong>
+              <em>The final spawn group arrives in full, so a 10x roll can push you past capacity. Off = hard cap at capacity.</em>
+            </span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optMassiveStacks" checked>
+            <span>
+              <strong>Massive frogs also get the Big multiplier</strong>
+              <em>Massive spawns out of Big, so its loot is ×Big×Massive (base ×15). Off = ×Massive only.</em>
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">Frogurt rarity <span class="unit">1 in</span></span>
+            <input type="number" id="optFrogurt" value="196" min="1" step="1">
+            <em class="field-help">The wiki lists Frogurt as "1/?". Adjust if you know the real number.</em>
+          </label>
+          <label class="field">
+            <span class="field-label">RNG seed <span class="unit">optional</span></span>
+            <input type="text" id="optSeed" placeholder="blank = random every run">
+            <em class="field-help">Set a seed to replay the exact same rolls.</em>
+          </label>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- =============================== TABS ============================== -->
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" class="tab is-active" data-tab="sim" aria-selected="true" aria-controls="tab-sim">🎰 Simulator</button>
+    <button type="button" role="tab" class="tab" data-tab="vault" aria-selected="false" aria-controls="tab-vault">💰 Saved Totals <span class="tab-badge" id="vaultBadge" hidden>0</span></button>
+    <button type="button" role="tab" class="tab" data-tab="odds" aria-selected="false" aria-controls="tab-odds">📊 Probabilities</button>
+  </nav>
+
+  <!-- ============================ SIMULATOR ============================ -->
+  <section class="tab-panel is-active" id="tab-sim" role="tabpanel">
+
+    <div class="card launch-card">
+      <div class="launch-row">
+        <label class="field spawn-field">
+          <span class="field-label">Frogspawn to use</span>
+          <input type="number" id="spawnCount" value="1" min="1" max="1000" step="1" inputmode="numeric">
+        </label>
+        <button type="button" class="spawn-btn" id="spawnBtn">
+          <img src="https://static.wikitide.net/shminerwiki/5/5f/Frogspawn.png" alt="" class="spawn-btn-icon" data-fallback="🥚">
+          <span id="spawnBtnLabel">Use 1 Frogspawn</span>
+        </button>
+        <button type="button" class="ghost-btn" id="skipBtn" hidden>Skip animation</button>
+      </div>
+      <p class="launch-note" id="launchNote"></p>
+    </div>
+
+    <div class="run-area" id="runArea" hidden>
+      <div class="run-stats" id="runStats"></div>
+
+      <div class="results-head">
+        <h2>Lootfrogs <span class="count-pill" id="frogProgress"></span></h2>
+        <div class="results-actions">
+          <button type="button" class="primary-btn small" id="saveBtn" disabled>💾 Save results</button>
+          <button type="button" class="ghost-btn small" id="clearRunBtn">Clear</button>
+        </div>
+      </div>
+
+      <div class="frog-grid" id="frogGrid" aria-live="polite"></div>
+
+      <div class="run-totals card" id="runTotals" hidden>
+        <h3>Run total</h3>
+        <div class="totals-grid" id="runTotalsGrid"></div>
+      </div>
+    </div>
+
+    <p class="empty-state" id="simEmpty">Set your stats above, then use a Frogspawn to see what crawls out. 🐸</p>
+  </section>
+
+  <!-- ============================== VAULT ============================== -->
+  <section class="tab-panel" id="tab-vault" role="tabpanel">
+    <div class="card">
+      <div class="results-head">
+        <h2>Saved Totals</h2>
+        <div class="results-actions">
+          <button type="button" class="ghost-btn small" id="exportVault">Export CSV</button>
+          <button type="button" class="danger-btn small" id="clearVault">Clear vault</button>
+        </div>
+      </div>
+      <div class="vault-meta" id="vaultMeta"></div>
+      <div class="totals-grid big" id="vaultTotals"></div>
+      <h3 class="sub-head">Frogs collected</h3>
+      <div class="type-tally" id="vaultTypes"></div>
+      <h3 class="sub-head">Saved runs</h3>
+      <div class="table-scroll">
+        <table class="data-table" id="vaultRuns">
+          <thead><tr><th>#</th><th>When</th><th>Frogspawn</th><th>Frogs</th><th>Highlights</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ODDS =============================== -->
+  <section class="tab-panel" id="tab-odds" role="tabpanel">
+    <div class="card">
+      <h2>Per-Frogspawn expectations</h2>
+      <p class="hint">Exact maths from your stats — no sampling. Recalculates as you edit.</p>
+      <div class="kpi-grid" id="oddsKpis"></div>
+    </div>
+
+    <div class="card">
+      <h2>Frog spectrum</h2>
+      <p class="hint">Chance of each variety per spawned frog, its total loot multiplier, and how many you should expect per Frogspawn.</p>
+      <div class="table-scroll">
+        <table class="data-table" id="typeTable">
+          <thead><tr><th>Frog</th><th>Chance</th><th>1 in</th><th>Loot multiplier</th><th>Expected per Frogspawn</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Expected yield per Frogspawn</h2>
+      <div class="totals-grid" id="oddsYield"></div>
+    </div>
+
+    <div class="card">
+      <h2>Reward table by frog type</h2>
+      <p class="hint">Drop chance is identical for every frog; the quantities are what change. Capped rewards show how often the multiplier is wasted.</p>
+      <div class="type-picker" id="typePicker" role="tablist" aria-label="Frog type"></div>
+      <div class="table-scroll">
+        <table class="data-table" id="rewardTable">
+          <thead>
+            <tr><th>Reward</th><th>Chance</th><th>1 in</th><th>Base</th><th>After multiplier</th><th>Average</th><th>Per frog</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card notes">
+      <h2>How this is modelled</h2>
+      <ul id="assumptions">
+        <li><strong>Spawn order.</strong> Each spawn group rolls 10x first, then Triple, else a single frog. Group size is locked in before any size roll, so Big and Massive frogs never multi-spawn.</li>
+        <li><strong>Size and gold.</strong> Every frog independently rolls Big; a Big frog then rolls Massive. Golden is rolled separately and can land on any size.</li>
+        <li><strong>Multipliers.</strong> Loot multiplier applies to all frogs, Big and Massive stack on top for their sizes, and Golden multiplies whatever is left.</li>
+        <li><strong>Quantities.</strong> A uniform base roll is multiplied, floored, and never drops below 1.</li>
+        <li><strong>Caps.</strong> Frogspawn is capped at 3 / 3 / 6 and Lootbug Lantern at 3 / 6 / 9 for Basic / Big / Massive, regardless of multipliers — golden does not raise the cap.</li>
+        <li><strong>Chances above 100%.</strong> Treated as guaranteed for these binary rolls.</li>
+        <li><strong>Frogurt.</strong> Rarity is listed as "1/?" in game, so it is modelled as 1 in 196 by default and is adjustable in the advanced options.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <div class="wrap">
+    <p>Fan-made calculator. Item art from the Idle Ore Miner wiki. Not affiliated with the game.</p>
+  </div>
+</footer>
+
+<div class="jackpot" id="jackpot" aria-hidden="true"><span id="jackpotText"></span></div>
+
+<script src="js/data.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
