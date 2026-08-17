@@ -27,6 +27,7 @@
     saved: false,
     animating: false,
     abort: false,
+    showPlayed: false,
     timer: null,
     vault: emptyVault()
   };
@@ -340,7 +341,11 @@
 
     renderRunStats(state.currentRun);
 
-    if (wantsTheatre(cfg, uses)) playTheatre(state.currentRun);
+    /* The spawn show is step 02 when it plays; when it is skipped the run
+       total moves up to take its place. */
+    state.showPlayed = wantsTheatre(cfg, uses);
+
+    if (state.showPlayed) playTheatre(state.currentRun);
     else renderResults(state.currentRun, true);
   }
 
@@ -780,6 +785,7 @@
   }
 
   function renderRunTotals(run) {
+    $('#runTotalsNo').textContent = state.showPlayed ? '03' : '02';
     $('#runTotals').hidden = false;
     totalsGrid($('#runTotalsGrid'), run.totals, {});
   }
