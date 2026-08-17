@@ -1,6 +1,6 @@
 # Frogspawn Loot Calculator
 
-A web app that simulates what you get out of a **Frogspawn** in Idle Ore Miner, and
+A web app that simulates what you get out of a **Frogspawn** in Idle Obelisk Miner, and
 shows the underlying drop odds for every Lootfrog variety.
 
 No build step, no dependencies — plain HTML, CSS and JavaScript, ready for GitHub Pages.
@@ -130,5 +130,5 @@ the layout holds either way.
 `js/sim.js` and `js/analytics.js` are free of DOM access, so they can be loaded and
 exercised outside a browser.
 
-Item art is hotlinked from the Idle Ore Miner wiki, with emoji fallbacks if it can't be
+Item art is hotlinked from the Idle Obelisk Miner wiki, with emoji fallbacks if it can't be
 reached. Fan-made; not affiliated with the game.
