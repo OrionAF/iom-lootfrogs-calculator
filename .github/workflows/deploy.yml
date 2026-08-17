@@ -26,6 +26,15 @@ jobs:
 
       - uses: actions/configure-pages@v5
 
+      # Stamp the commit into every local asset URL. Pages caches index.html
+      # and its assets separately for 10 minutes, so without this a visitor
+      # can hold a fresh page that still loads a stale script.
+      - name: Cache-bust asset URLs
+        run: |
+          sed -i "s/?v=dev/?v=${GITHUB_SHA::8}/g" index.html
+          echo "Stamped ?v=${GITHUB_SHA::8}"
+          grep -c "?v=${GITHUB_SHA::8}" index.html
+
       # No build step — the site is plain HTML/CSS/JS served as-is.
       - uses: actions/upload-pages-artifact@v3
         with:

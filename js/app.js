@@ -264,6 +264,10 @@
     if (uses * perUse > RENDER_CAP) {
       note += ' Only the first ' + RENDER_CAP + ' are drawn; totals still count every frog.';
     }
+    /* Say why the show is not playing, rather than silently skipping it. */
+    if (!wantsTheatre(cfg, uses)) {
+      note += ' <b>' + theatreSkipReason(cfg, uses) + '</b>';
+    }
     $('#launchNote').innerHTML = note;
   }
 
@@ -360,10 +364,20 @@
   }
 
   function wantsTheatre(cfg, uses) {
-    return !!global.LFTheatre &&
+    return !!Theatre &&
       uses === 1 &&
       cfg.capacity <= THEATRE_MAX_COLUMNS &&
       !prefersReducedMotion();
+  }
+
+  function theatreSkipReason(cfg, uses) {
+    if (!Theatre) return '';
+    if (uses !== 1) return 'Set this to 1 to watch the spawn play out.';
+    if (cfg.capacity > THEATRE_MAX_COLUMNS) {
+      return 'Capacity above ' + THEATRE_MAX_COLUMNS + ' is too wide to animate.';
+    }
+    if (prefersReducedMotion()) return 'Reduced motion is on, so the spawn animation is off.';
+    return '';
   }
 
   function playTheatre(run) {

@@ -11,7 +11,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" href="https://static.wikitide.net/shminerwiki/5/5f/Frogspawn.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,600..800&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="css/styles.css">
+<!-- The version token on each local asset is rewritten to the commit SHA at
+     deploy time. This page and its assets are cached independently, so
+     without it a fresh page can pair with a stale script and silently run
+     half-old code. -->
+<link rel="stylesheet" href="css/styles.css?v=dev">
 <script>
   /* Paint the stored theme before first paint so the page never flashes. */
   try {
@@ -275,11 +279,11 @@
 
 <div class="jackpot" id="jackpot" aria-hidden="true"><span id="jackpotText"></span></div>
 
-<script src="js/data.js"></script>
-<script src="js/sim.js"></script>
-<script src="js/analytics.js"></script>
-<script src="js/theatre.js"></script>
-<script src="js/theme.js"></script>
-<script src="js/app.js"></script>
+<script src="js/data.js?v=dev"></script>
+<script src="js/sim.js?v=dev"></script>
+<script src="js/analytics.js?v=dev"></script>
+<script src="js/theatre.js?v=dev"></script>
+<script src="js/theme.js?v=dev"></script>
+<script src="js/app.js?v=dev"></script>
 </body>
 </html>
