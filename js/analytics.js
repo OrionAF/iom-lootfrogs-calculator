@@ -59,12 +59,10 @@
    * Expected frogs spawned by one Frogspawn.
    * Exact via backward recursion on remaining capacity:
    *   f(r) = SUM_k p_k * (k + f(max(0, r - k))),  f(r <= 0) = 0
-   * With overflow off the group is truncated to the remaining space, which
-   * makes the answer exactly the capacity.
+   * The last group is never truncated, so the answer sits above capacity
+   * whenever multi-spawn is possible.
    */
   function expectedFrogsPerUse(cfg) {
-    if (!cfg.overflow) return cfg.capacity;
-
     var groups = groupSizeDistribution(cfg);
     var f = new Array(cfg.capacity + 1);
     f[0] = 0;

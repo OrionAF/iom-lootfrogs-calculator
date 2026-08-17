@@ -9,8 +9,8 @@
    never itself multi-spawn. Every frog in the group then independently
    rolls Big -> Massive and Golden.
 
-   With `overflow` on (default) the last group spawns in full, so a lucky 10x
-   at the end can push you past capacity. Turn it off to hard-cap at capacity.
+   The last group always spawns in full, so a lucky 10x at the end can push
+   you past capacity.
    ========================================================================= */
 (function (global) {
   'use strict';
@@ -64,7 +64,7 @@
   /**
    * Turn raw stat values into everything the simulator and the odds tab need.
    * @param {Object} stats  keyed by the game's JSON stat names
-   * @param {Object} [opts] { overflow, massiveStacksBig, frogurtOneIn, seed }
+   * @param {Object} [opts] { frogurtOneIn, seed }
    */
   function buildConfig(stats, opts) {
     stats = stats || {};
@@ -82,8 +82,6 @@
       bigMulti: num(stats.lootfrog_big_multi, 5),
       massiveChance: pct(stats.lootfrog_massive_chance),
       massiveMulti: num(stats.lootfrog_massive_multi, 3),
-      overflow: opts.overflow !== false,
-      massiveStacksBig: opts.massiveStacksBig !== false,
       frogurtOneIn: Math.max(1, num(opts.frogurtOneIn, D.BASE_POOL))
     };
 
@@ -108,13 +106,12 @@
 
   function frogMultiplier(cfg, size, golden) {
     var m = cfg.lootMulti;
-    if (size === 'big' || size === 'massive') {
-      if (size === 'massive') {
-        m *= cfg.massiveMulti;
-        if (cfg.massiveStacksBig) m *= cfg.bigMulti;
-      } else {
-        m *= cfg.bigMulti;
-      }
+    if (size === 'massive') {
+      /* Massive spawns out of Big, so it carries both multipliers. */
+      m *= cfg.massiveMulti;
+      m *= cfg.bigMulti;
+    } else if (size === 'big') {
+      m *= cfg.bigMulti;
     }
     if (golden) m *= cfg.goldenMulti;
     return m;
@@ -188,7 +185,6 @@
 
     while (spawned < cfg.capacity && guard++ < 100000) {
       var size = rollGroupSize(cfg, rng);
-      if (!cfg.overflow) size = Math.min(size, cfg.capacity - spawned);
       for (var i = 0; i < size; i++) {
         var frog = rollFrog(cfg, rng);
         var loot = rollLoot(cfg, frog, rng);

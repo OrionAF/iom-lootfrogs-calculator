@@ -11,6 +11,12 @@ No build step, no dependencies — plain HTML, CSS and JavaScript, ready for Git
   ten `lootfrog_*` values out. Blank or `0` fields fall back to base game values.
 - **Use X Frogspawn** and watch the lootfrogs spawn in with their rolled rewards —
   golden frogs shimmer, big/massive frogs are colour-coded, and rare drops get a moment.
+  The run total sits directly above the results, so it stays in view no matter how many
+  frogs you spawned.
+- **Filter the results** by frog variety and by reward rarity. Selections combine within
+  a group (Epic *or* Legendary) and narrow across groups (Golden frogs *and* Legendary
+  drops). Filtering searches the whole run rather than the rendered slice, so a hunt for
+  legendaries finds them even past the 600-card render cap.
 - **Save results** into a running vault of totals across as many Frogspawn as you like,
   exportable to CSV.
 - **Probabilities tab** with exact (non-sampled) odds and expected yields per frog
@@ -41,9 +47,8 @@ each group rolls **10x** first, then **Triple**, otherwise a single frog. Group 
 locked in *before* any size roll, so a Big or Massive frog never multi-spawns. Every frog
 in the group then independently rolls **Big → Massive**, and **Golden** separately.
 
-Because the last group can be a 10x, a Frogspawn can slightly overshoot capacity. That
-overflow is on by default and can be switched off in the advanced options, in which case
-you get exactly capacity frogs.
+Because the last group can be a 10x and is never truncated, a Frogspawn can slightly
+overshoot capacity.
 
 ### Multipliers
 
@@ -55,7 +60,6 @@ total = Lootfrog Loot Multiplier
 ```
 
 Massive spawns out of Big, so a Massive frog gets both multipliers (base ×5 × ×3 = ×15).
-If you'd rather model Massive as replacing Big, there's a toggle in the advanced options.
 
 Rolled quantities are `floor(base × total)`, never below 1.
 

@@ -48,9 +48,6 @@
       <button type="button" class="ghost-btn small" id="themeToggle" title="Switch between press and newsprint">
         <span class="icon-slot" id="themeIcon">◐</span><span class="btn-text">Theme</span>
       </button>
-      <button type="button" class="ghost-btn small" id="soundToggle" aria-pressed="false" title="Toggle sound effects">
-        <span class="icon-slot" data-on="🔊" data-off="🔇">🔇</span><span class="btn-text">Sound</span>
-      </button>
     </div>
   </div>
 </header>
@@ -88,20 +85,6 @@
       <details class="advanced">
         <summary>Advanced modelling options</summary>
         <div class="advanced-grid">
-          <label class="check">
-            <input type="checkbox" id="optOverflow" checked>
-            <span>
-              <strong>Allow spawn overflow</strong>
-              <em>The final spawn group arrives in full, so a 10x roll can push you past capacity. Off = hard cap at capacity.</em>
-            </span>
-          </label>
-          <label class="check">
-            <input type="checkbox" id="optMassiveStacks" checked>
-            <span>
-              <strong>Massive frogs also get the Big multiplier</strong>
-              <em>Massive spawns out of Big, so its loot is ×Big×Massive (base ×15). Off = ×Massive only.</em>
-            </span>
-          </label>
           <label class="field">
             <span class="field-label">Frogurt rarity <span class="unit">1 in</span></span>
             <input type="number" id="optFrogurt" value="392" min="0" step="1">
@@ -152,6 +135,11 @@
     <div class="run-area" id="runArea" hidden>
       <div class="run-stats" id="runStats"></div>
 
+      <div class="run-totals card" id="runTotals" hidden>
+        <p class="eyebrow"><span class="no">02</span> Run total</p>
+        <div class="totals-grid" id="runTotalsGrid"></div>
+      </div>
+
       <div class="results-head">
         <h2>Lootfrogs <span class="count-pill" id="frogProgress"></span></h2>
         <div class="results-actions">
@@ -160,12 +148,24 @@
         </div>
       </div>
 
+      <div class="result-filters" id="resultFilters">
+        <div class="filter-group">
+          <span class="filter-label" id="filterTypesLabel">Frog</span>
+          <div class="filter-chips" id="filterTypes" role="group" aria-labelledby="filterTypesLabel"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" id="filterTiersLabel">Rarity</span>
+          <div class="filter-chips" id="filterTiers" role="group" aria-labelledby="filterTiersLabel"></div>
+        </div>
+        <div class="filter-foot" id="filterFoot" hidden>
+          <button type="button" class="ghost-btn small" id="filterReset">Show all</button>
+          <span class="filter-note" id="filterNote"></span>
+        </div>
+      </div>
+
       <div class="frog-grid" id="frogGrid" aria-live="polite"></div>
 
-      <div class="run-totals card" id="runTotals" hidden>
-        <p class="eyebrow"><span class="no">02</span> Run total</p>
-        <div class="totals-grid" id="runTotalsGrid"></div>
-      </div>
+      <p class="empty-state" id="filterEmpty" hidden>No frogs in this run match the filter.</p>
     </div>
 
     <p class="empty-state" id="simEmpty">Set your stats above, then use a Frogspawn<br>to see what crawls out.</p>

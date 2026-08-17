@@ -629,39 +629,6 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   margin-top: 1rem;
 }
 
-.check {
-  display: flex;
-  gap: .6rem;
-  align-items: flex-start;
-  cursor: pointer;
-}
-
-.check input {
-  margin-top: .2rem;
-  accent-color: var(--acid);
-  width: 17px;
-  height: 17px;
-  flex: none;
-}
-
-.check strong {
-  display: block;
-  font-family: var(--mono);
-  font-size: .7rem;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-weight: 500;
-}
-
-.check em {
-  display: block;
-  font-size: .74rem;
-  line-height: 1.45;
-  color: var(--bone-3);
-  font-style: normal;
-  margin-top: .2rem;
-}
-
 /* --------------------------------------------------------------- tabs -- */
 
 .tabs {
@@ -880,6 +847,109 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   color: var(--bone-3);
   border: var(--hair) solid var(--rule);
   padding: .1rem .4rem;
+}
+
+/* ------------------------------------------------------ run filters -- */
+
+.result-filters {
+  display: grid;
+  gap: .75rem;
+  background: var(--panel);
+  border: var(--hair) solid var(--rule);
+  padding: .8rem;
+  margin-bottom: 1rem;
+}
+
+.filter-group { display: grid; gap: .4rem; }
+
+.filter-label {
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--bone-3);
+}
+
+.filter-chips { display: flex; flex-wrap: wrap; gap: 0; }
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--bone-3);
+  background: transparent;
+  border: var(--hair) solid var(--rule);
+  margin: 0 -1px -1px 0;
+  padding: .4rem .6rem;
+  min-height: 38px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+/* A swatch of the thing being filtered for, so the chip reads at a glance. */
+.filter-chip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--chip-ink, var(--bone-3));
+}
+
+.filter-chip[data-size="basic"] { --chip-ink: var(--moss); }
+.filter-chip[data-size="big"] { --chip-ink: var(--mint); }
+.filter-chip[data-size="massive"] { --chip-ink: var(--ember); }
+.filter-chip[data-golden="true"] { --chip-ink: var(--brass); }
+.filter-chip[data-tier="common"] { --chip-ink: var(--tier-common); }
+.filter-chip[data-tier="uncommon"] { --chip-ink: var(--tier-uncommon); }
+.filter-chip[data-tier="rare"] { --chip-ink: var(--tier-rare); }
+.filter-chip[data-tier="epic"] { --chip-ink: var(--tier-epic); }
+.filter-chip[data-tier="legendary"] { --chip-ink: var(--tier-legendary); }
+
+/* The :not() keeps hover from outranking the pressed fill — a selected chip
+   under the cursor must still read as selected. */
+.filter-chip:hover:not(:disabled):not([aria-pressed="true"]) {
+  color: var(--bone);
+  background: var(--acid-wash);
+}
+
+.filter-chip[aria-pressed="true"] {
+  position: relative;
+  z-index: 1;
+  background: var(--bone);
+  color: var(--ink);
+  border-color: var(--bone);
+}
+
+.filter-chip[aria-pressed="true"]:hover:not(:disabled) { background: var(--acid); }
+
+.filter-chip:disabled { opacity: .4; cursor: not-allowed; }
+
+.filter-foot {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.filter-note {
+  font-family: var(--mono);
+  font-size: .64rem;
+  letter-spacing: .06em;
+  color: var(--bone-3);
+}
+
+@media (min-width: 40em) {
+  .filter-group {
+    grid-template-columns: 4.5rem 1fr;
+    align-items: start;
+    gap: .6rem;
+  }
+
+  .filter-label { padding-top: .85rem; }
 }
 
 /* --------------------------------------------------------- frog cards -- */

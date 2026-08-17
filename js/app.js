@@ -18,8 +18,7 @@
   var STORE = {
     stats: 'lfcalc.stats',
     options: 'lfcalc.options',
-    vault: 'lfcalc.vault',
-    sound: 'lfcalc.sound'
+    vault: 'lfcalc.vault'
   };
 
   var state = {
@@ -28,7 +27,6 @@
     animating: false,
     abort: false,
     timer: null,
-    sound: false,
     vault: emptyVault()
   };
 
@@ -169,8 +167,6 @@
 
   function readOptions() {
     return {
-      overflow: $('#optOverflow').checked,
-      massiveStacksBig: $('#optMassiveStacks').checked,
       frogurtOneIn: parseFloat($('#optFrogurt').value) || D.BASE_POOL,
       seed: $('#optSeed').value.trim()
     };
@@ -260,7 +256,7 @@
     var perUse = An.expectedFrogsPerUse(cfg);
     var note = 'Each Frogspawn fills the screen to <b>' + cfg.capacity + '</b> lootfrog' +
       (cfg.capacity === 1 ? '' : 's') +
-      (cfg.overflow && perUse > cfg.capacity + 1e-9
+      (perUse > cfg.capacity + 1e-9
         ? ' — about <b>' + fmtNum(perUse) + '</b> on average once multi-spawn overflow is counted'
         : '') + '. ';
     note += 'Using <b>' + fmtInt(uses) + '</b> means roughly <b>' + fmtInt(uses * perUse) + '</b> frogs.';
@@ -284,16 +280,12 @@
 
       var opts = JSON.parse(localStorage.getItem(STORE.options) || 'null');
       if (opts) {
-        $('#optOverflow').checked = opts.overflow !== false;
-        $('#optMassiveStacks').checked = opts.massiveStacksBig !== false;
         if (opts.frogurtOneIn) $('#optFrogurt').value = opts.frogurtOneIn;
         if (opts.seed) $('#optSeed').value = opts.seed;
       }
 
       var vault = JSON.parse(localStorage.getItem(STORE.vault) || 'null');
       if (vault && vault.runs) state.vault = vault;
-
-      state.sound = localStorage.getItem(STORE.sound) === '1';
     } catch (err) { /* ignore corrupt storage */ }
   }
 
@@ -307,7 +299,6 @@
 
   var rolling = [];          // cards mid-spin
   var tickerRunning = false;
-  var lastBlip = 0;
   var jackpotQueue = [];
   var jackpotBusy = false;
 
@@ -339,7 +330,7 @@
     $('#runTotals').hidden = true;
 
     renderRunStats(state.currentRun);
-    playRun(state.currentRun);
+    renderResults(state.currentRun, true);
   }
 
   function renderRunStats(run) {
@@ -362,14 +353,134 @@
     }).join('');
   }
 
-  function playRun(run) {
+  /* ------------------------------------------------------- filters ----- */
+
+  var TIERS = [
+    { key: 'common', label: 'Common' },
+    { key: 'uncommon', label: 'Uncommon' },
+    { key: 'rare', label: 'Rare' },
+    { key: 'epic', label: 'Epic' },
+    { key: 'legendary', label: 'Legendary' }
+  ];
+
+  /* Two independent sets. Empty means "no restriction", so the common case
+     costs nothing — visibleFrogs hands back the original array untouched. */
+  var filter = { types: {}, tiers: {} };
+
+  function anySelected(group) {
+    for (var key in group) {
+      if (group[key]) return true;
+    }
+    return false;
+  }
+
+  function filterActive() {
+    return anySelected(filter.types) || anySelected(filter.tiers);
+  }
+
+  function frogTypeKey(frog) {
+    return frog.size + (frog.golden ? '_gold' : '');
+  }
+
+  function frogMatches(frog) {
+    if (anySelected(filter.types) && !filter.types[frogTypeKey(frog)]) return false;
+    if (anySelected(filter.tiers) && !filter.tiers[frog.reward.tier]) return false;
+    return true;
+  }
+
+  /* Filtering runs over the whole run, not just the rendered slice, so a
+     search for legendaries finds them even 20,000 frogs deep. */
+  function visibleFrogs(run) {
+    if (!filterActive()) return run.frogs;
+    return run.frogs.filter(frogMatches);
+  }
+
+  function buildFilterBar() {
+    var types = $('#filterTypes');
+    D.FROG_TYPES.forEach(function (t) {
+      var btn = filterChip('type', t.key, t.short);
+      btn.dataset.size = t.size;
+      btn.dataset.golden = String(t.golden);
+      types.appendChild(btn);
+    });
+
+    var tiers = $('#filterTiers');
+    TIERS.forEach(function (t) {
+      var btn = filterChip('tier', t.key, t.label);
+      btn.dataset.tier = t.key;
+      tiers.appendChild(btn);
+    });
+  }
+
+  function filterChip(group, key, label) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filter-chip';
+    btn.dataset.group = group;
+    btn.dataset.key = key;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.textContent = label;
+    return btn;
+  }
+
+  function clearFilters() {
+    filter.types = {};
+    filter.tiers = {};
+    document.querySelectorAll('.filter-chip').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', 'false');
+    });
+    onFilterChanged();
+  }
+
+  function onFilterChanged() {
+    if (state.animating || !state.currentRun) return;
+    renderResults(state.currentRun, false);
+  }
+
+  /* Chips would fight the animation loop for the grid, so lock them until
+     the last card has landed. */
+  function setFiltersEnabled(on) {
+    document.querySelectorAll('.filter-chip').forEach(function (btn) {
+      btn.disabled = !on;
+    });
+    $('#filterReset').disabled = !on;
+  }
+
+  function renderFilterNote(run) {
+    var active = filterActive();
+    $('#filterFoot').hidden = !active;
+    $('#filterNote').textContent = 'Run total above still covers all ' +
+      fmtInt(run.frogCount) + ' frogs.';
+  }
+
+  /* --------------------------------------------------------- the grid -- */
+
+  /* animate = false is the filter path: redraw the matching frogs at once,
+     no reels, no reveal, and leave the run's own state alone. */
+  function renderResults(run, animate) {
     var grid = $('#frogGrid');
     grid.innerHTML = '';
     rolling.length = 0;
 
-    var list = run.frogs.slice(0, RENDER_CAP);
+    var matching = visibleFrogs(run);
+    var list = matching.slice(0, RENDER_CAP);
+
+    renderFilterNote(run);
+    $('#filterEmpty').hidden = list.length > 0;
+
+    if (!animate) {
+      for (var i = 0; i < list.length; i++) grid.appendChild(makeFrogCard(list[i], false));
+      updateProgress(list.length, matching.length, run, true);
+      return;
+    }
+    playRun(run, matching, list);
+  }
+
+  function playRun(run, matching, list) {
+    var grid = $('#frogGrid');
     var animated = list.length <= ANIMATE_CAP;
 
+    setFiltersEnabled(false);
     state.animating = true;
     state.abort = false;
     $('#skipBtn').hidden = false;
@@ -389,7 +500,7 @@
       for (var c = 0; c < chunkSize && i < list.length; c++) {
         grid.appendChild(makeFrogCard(list[i++], animated));
       }
-      updateProgress(i, run, false);
+      updateProgress(i, matching.length, run, false);
       if (i < list.length) {
         state.timer = setTimeout(step, stepDelay);
       } else {
@@ -411,7 +522,8 @@
       $('#spawnBtn').disabled = false;
       $('#spawnBtn').classList.remove('is-busy');
       $('#saveBtn').disabled = false;
-      updateProgress(list.length, run, true);
+      setFiltersEnabled(true);
+      updateProgress(list.length, matching.length, run, true);
       renderRunTotals(run);
     }
 
@@ -424,15 +536,20 @@
     rolling.length = 0;
   }
 
-  function updateProgress(shown, run, done) {
+  /* `matching` is what survived the filter, `run.frogCount` the whole run.
+     The pill has to be honest about both, plus the RENDER_CAP cutoff. */
+  function updateProgress(shown, matching, run, done) {
     var pill = $('#frogProgress');
     if (!done) {
-      pill.textContent = fmtInt(shown) + ' / ' + fmtInt(run.frogCount);
-    } else if (shown < run.frogCount) {
-      pill.textContent = fmtInt(shown) + ' shown of ' + fmtInt(run.frogCount) + ' frogs';
-    } else {
-      pill.textContent = fmtInt(run.frogCount) + ' frogs';
+      pill.textContent = fmtInt(shown) + ' / ' + fmtInt(matching);
+      return;
     }
+    var head = shown < matching
+      ? fmtInt(shown) + ' shown of ' + fmtInt(matching)
+      : fmtInt(matching);
+    pill.textContent = matching < run.frogCount
+      ? head + ' matching, ' + fmtInt(run.frogCount) + ' total'
+      : head + ' frogs';
   }
 
   function makeFrogCard(frog, animated) {
@@ -485,7 +602,6 @@
       card.classList.add('just-landed');
       setTimeout(function () { card.classList.remove('just-landed'); }, 500);
       countUp(qtyEl, frog.qty);
-      blip(frog.reward.tier);
       if (frog.reward.tier === 'legendary') {
         queueJackpot(D.RESOURCES[frog.reward.res].name.toUpperCase() + ' ×' + frog.qty + '!');
       }
@@ -546,57 +662,11 @@
     el.classList.remove('show');
     void el.offsetWidth; // restart the animation
     el.classList.add('show');
-    chime();
     setTimeout(function () {
       el.classList.remove('show');
       jackpotBusy = false;
       drainJackpot();
     }, 1550);
-  }
-
-  /* --------------------------------------------------------- sound ----- */
-
-  var audioCtx = null;
-
-  function ctx() {
-    if (!audioCtx) {
-      var AC = global.AudioContext || global.webkitAudioContext;
-      if (!AC) return null;
-      audioCtx = new AC();
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return audioCtx;
-  }
-
-  function tone(freq, dur, type, gain) {
-    var ac = ctx();
-    if (!ac) return;
-    var osc = ac.createOscillator();
-    var vol = ac.createGain();
-    osc.type = type || 'triangle';
-    osc.frequency.value = freq;
-    vol.gain.setValueAtTime(gain || 0.05, ac.currentTime);
-    vol.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
-    osc.connect(vol).connect(ac.destination);
-    osc.start();
-    osc.stop(ac.currentTime + dur);
-  }
-
-  var TIER_NOTE = { common: 420, uncommon: 520, rare: 640, epic: 780, legendary: 960 };
-
-  function blip(tier) {
-    if (!state.sound) return;
-    var now = performance.now();
-    if (now - lastBlip < 55) return;
-    lastBlip = now;
-    tone(TIER_NOTE[tier] || 440, 0.09, 'triangle', 0.04);
-  }
-
-  function chime() {
-    if (!state.sound) return;
-    [784, 988, 1319].forEach(function (f, i) {
-      setTimeout(function () { tone(f, 0.22, 'sine', 0.06); }, i * 90);
-    });
   }
 
   /* ==================================================== totals views ==== */
@@ -787,7 +857,7 @@
     var kpis = [
       {
         k: 'Lootfrogs per Frogspawn', v: fmtNum(s.frogsPerUse), cls: 'good',
-        sub: 'capacity ' + cfg.capacity + (cfg.overflow ? ', with overflow' : ', hard capped')
+        sub: 'capacity ' + cfg.capacity + ', with overflow'
       },
       {
         k: 'Frogspawn returned', v: fmtNum(s.frogspawnReturned),
@@ -930,7 +1000,7 @@
       parseJsonInput();
     });
 
-    ['#optOverflow', '#optMassiveStacks', '#optFrogurt', '#optSeed'].forEach(function (sel) {
+    ['#optFrogurt', '#optSeed'].forEach(function (sel) {
       $(sel).addEventListener('input', onStatsChanged);
       $(sel).addEventListener('change', onStatsChanged);
     });
@@ -955,6 +1025,8 @@
       $('#runArea').hidden = true;
       $('#simEmpty').hidden = false;
       $('#frogGrid').innerHTML = '';
+      $('#filterEmpty').hidden = true;
+      setFiltersEnabled(true);
     });
 
     /* tabs */
@@ -976,6 +1048,18 @@
     });
     $('#exportVault').addEventListener('click', exportVaultCsv);
 
+    /* result filters */
+    $('#resultFilters').addEventListener('click', function (e) {
+      var btn = e.target;
+      if (!btn.dataset || !btn.dataset.group) return;
+      var group = btn.dataset.group === 'type' ? filter.types : filter.tiers;
+      group[btn.dataset.key] = !group[btn.dataset.key];
+      btn.setAttribute('aria-pressed', String(!!group[btn.dataset.key]));
+      onFilterChanged();
+    });
+
+    $('#filterReset').addEventListener('click', clearFilters);
+
     /* odds type picker */
     $('#typePicker').addEventListener('click', function (e) {
       var type = e.target && e.target.dataset && e.target.dataset.type;
@@ -984,31 +1068,16 @@
       renderOdds(currentConfig());
     });
 
-    /* sound */
-    $('#soundToggle').addEventListener('click', function () {
-      state.sound = !state.sound;
-      this.setAttribute('aria-pressed', String(state.sound));
-      var slot = this.querySelector('.icon-slot');
-      slot.textContent = state.sound ? slot.dataset.on : slot.dataset.off;
-      try { localStorage.setItem(STORE.sound, state.sound ? '1' : '0'); } catch (err) { /* noop */ }
-      if (state.sound) tone(660, 0.12, 'sine', 0.05);
-    });
   }
 
   /* ============================================================ boot ==== */
 
   function init() {
     buildStatGrid();
+    buildFilterBar();
     guardStaticIcons();
     restore();
     wire();
-
-    if (state.sound) {
-      var toggle = $('#soundToggle');
-      toggle.setAttribute('aria-pressed', 'true');
-      var slot = toggle.querySelector('.icon-slot');
-      slot.textContent = slot.dataset.on;
-    }
 
     updateSpawnButton();
     onStatsChanged();
