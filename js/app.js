@@ -7,6 +7,7 @@
   var D = global.LFData;
   var Sim = global.LFSim;
   var An = global.LFAnalytics;
+  var Theatre = global.LFTheatre;
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
 
@@ -330,7 +331,60 @@
     $('#runTotals').hidden = true;
 
     renderRunStats(state.currentRun);
-    renderResults(state.currentRun, true);
+
+    if (wantsTheatre(cfg, uses)) playTheatre(state.currentRun);
+    else renderResults(state.currentRun, true);
+  }
+
+  /* ======================================================== theatre ===== */
+
+  /* The show is one grid per Frogspawn, so it only makes sense for a single
+     use — 50 Frogspawn would be 50 grids and thousands of sprites. Bulk runs
+     keep the fast cascade. */
+  var THEATRE_MAX_COLUMNS = 60;
+
+  function theatreEls() {
+    return {
+      root: $('#theatre'),
+      stage: $('#theatreStage'),
+      inner: $('#theatreInner'),
+      grid: $('#theatreGrid'),
+      bowl: $('#theatreBowl'),
+      frogs: $('#theatreFrogs'),
+      phase: $('#theatrePhase')
+    };
+  }
+
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function wantsTheatre(cfg, uses) {
+    return !!global.LFTheatre &&
+      uses === 1 &&
+      cfg.capacity <= THEATRE_MAX_COLUMNS &&
+      !prefersReducedMotion();
+  }
+
+  function playTheatre(run) {
+    state.animating = true;
+    state.abort = false;
+    $('#skipBtn').hidden = false;
+    $('#spawnBtn').disabled = true;
+    $('#spawnBtn').classList.add('is-busy');
+    setFiltersEnabled(false);
+    $('#frogGrid').innerHTML = '';
+    $('#frogProgress').textContent = '';
+
+    Theatre.play({
+      run: run,
+      els: theatreEls(),
+      onDone: function () {
+        state.animating = false;
+        Theatre.hide(theatreEls());
+        renderResults(run, true);
+      }
+    });
   }
 
   function renderRunStats(run) {
@@ -1011,10 +1065,15 @@
       renderLaunchNote(currentConfig());
     });
     $('#spawnBtn').addEventListener('click', runSimulation);
-    $('#skipBtn').addEventListener('click', function () { state.abort = true; });
+    /* First click cuts the spawn show short, the next one lands the cards. */
+    $('#skipBtn').addEventListener('click', function () {
+      if (Theatre && Theatre.isRunning()) { Theatre.skip(); return; }
+      state.abort = true;
+    });
     $('#saveBtn').addEventListener('click', saveCurrentRun);
     $('#clearRunBtn').addEventListener('click', function () {
       clearTimeout(state.timer);
+      if (Theatre) Theatre.hide(theatreEls());
       rolling.length = 0;
       state.animating = false;
       state.abort = false;

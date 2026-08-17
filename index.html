@@ -132,11 +132,23 @@
       <p class="launch-note" id="launchNote"></p>
     </div>
 
+    <!-- The spawn show. One Frogspawn only; bulk runs skip straight to loot. -->
+    <div class="card theatre" id="theatre" hidden>
+      <p class="eyebrow"><span class="no">02</span> <span id="theatrePhase">The spawn</span></p>
+      <div class="theatre-stage" id="theatreStage">
+        <div class="theatre-inner" id="theatreInner">
+          <div class="theatre-grid" id="theatreGrid"></div>
+          <div class="theatre-bowl" id="theatreBowl"></div>
+          <div class="theatre-frogs" id="theatreFrogs" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="run-area" id="runArea" hidden>
       <div class="run-stats" id="runStats"></div>
 
       <div class="run-totals card" id="runTotals" hidden>
-        <p class="eyebrow"><span class="no">02</span> Run total</p>
+        <p class="eyebrow"><span class="no">03</span> Run total</p>
         <div class="totals-grid" id="runTotalsGrid"></div>
       </div>
 
@@ -266,6 +278,7 @@
 <script src="js/data.js"></script>
 <script src="js/sim.js"></script>
 <script src="js/analytics.js"></script>
+<script src="js/theatre.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -140,7 +140,10 @@
       size: size,
       golden: golden,
       type: frogTypeKey(size, golden),
-      multiplier: frogMultiplier(cfg, size, golden)
+      multiplier: frogMultiplier(cfg, size, golden),
+      /* Which of the 66 portraits this frog wears. Purely cosmetic, but it
+         comes off the seeded stream so a replay looks identical too. */
+      art: randInt(rng, 0, D.FROG_ART.length - 1)
     };
   }
 
@@ -210,6 +213,7 @@
           golden: frog.golden,
           type: frog.type,
           multiplier: frog.multiplier,
+          art: frog.art,
           reward: loot.reward,
           base: loot.base,
           qty: loot.qty,

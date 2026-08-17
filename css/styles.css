@@ -849,6 +849,168 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   padding: .1rem .4rem;
 }
 
+/* ---------------------------------------------------------- theatre -- */
+
+/* The stage scrolls sideways when capacity outruns the panel, rather than
+   forcing the whole page to. Grid, bowl and sprites scroll together. */
+.theatre-stage {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  margin-top: .3rem;
+}
+
+.theatre-inner { position: relative; }
+
+.theatre-grid {
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .3s, height .5s cubic-bezier(.4, 0, .2, 1);
+}
+
+.theatre-grid.is-in { opacity: 1; }
+
+/* Collapsing the grid to zero hands its origin to the bowl, which is what
+   keeps sprite coordinates meaning the same thing in both phases. */
+.theatre.is-bowl .theatre-grid { opacity: 0; }
+
+.tg-label,
+.tg-head {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .08em;
+  color: var(--bone-3);
+  display: grid;
+  place-items: center;
+}
+
+.tg-head {
+  top: 0;
+  font-size: .55rem;
+}
+
+.tg-label { left: 0; }
+
+.tg-cell {
+  position: absolute;
+  border: var(--hair) solid var(--rule);
+  background: var(--sunk);
+  animation: cellIn .28s steps(3) both;
+}
+
+@keyframes cellIn {
+  from { opacity: 0; transform: scaleY(.4); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+.tg-cell.is-hit { border-color: var(--acid); background: var(--acid-wash); }
+.tg-cell.is-miss { background: var(--panel); }
+
+/* The red X from the reference sheet, drawn rather than imaged. */
+.tg-x {
+  position: absolute;
+  inset: 12%;
+  animation: xIn .16s steps(2) both;
+}
+
+.tg-x::before,
+.tg-x::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--ember);
+}
+
+.tg-x::before { transform: rotate(45deg); }
+.tg-x::after { transform: rotate(-45deg); }
+
+@keyframes xIn {
+  from { opacity: 0; transform: scale(1.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ------------------------------------------------------------- bowl -- */
+
+.theatre-bowl {
+  position: relative;
+  height: 0;
+  border: var(--hair) solid var(--rule);
+  border-top-width: 0;
+  background:
+    repeating-linear-gradient(90deg, var(--rule-soft) 0 1px, transparent 1px 22px),
+    var(--sunk);
+  opacity: 0;
+  transition: height .55s cubic-bezier(.2, .8, .3, 1), opacity .3s;
+}
+
+.theatre-bowl.is-open { opacity: 1; border-top-width: var(--hair); }
+
+/* One layer holds every sprite for the whole show, so moving from grid to
+   bowl is a transform change and never a reparent. */
+.theatre-frogs {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.theatre.is-bowl .theatre-frogs { top: 0; }
+
+.tf {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transition: transform .5s cubic-bezier(.2, .8, .3, 1);
+  will-change: transform;
+}
+
+.tf img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  /* The collision shape is the circle inscribed in this box — see
+     packCircles — but it stays invisible: no clipping, so hats and tails
+     are never cropped, and frogs nest rather than colliding as rectangles. */
+  transition: width .45s cubic-bezier(.2, .8, .3, 1), height .45s cubic-bezier(.2, .8, .3, 1);
+}
+
+.tf.is-hidden { opacity: 0; }
+.tf.is-drop { animation: frogDrop .3s ease-out both; }
+.tf.is-falling { transition: transform .85s cubic-bezier(.3, .05, .2, 1); }
+
+@keyframes frogDrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tf.is-flash img { filter: drop-shadow(0 0 8px var(--acid)) brightness(1.35); }
+.tf.is-big img { filter: drop-shadow(0 0 6px var(--mint)); }
+.tf.is-massive img { filter: drop-shadow(0 0 10px var(--ember)); }
+.tf.is-gold img { filter: drop-shadow(0 0 10px var(--brass)); }
+
+/* Popping animates the image, never the .tf anchor — the anchor's transform
+   is the sprite's position and must not be clobbered by a keyframe. */
+.tf.is-pop img { animation: frogPop .36s cubic-bezier(.3, .9, .4, 1) both; }
+
+@keyframes frogPop {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf, .tf img, .theatre-bowl, .theatre-grid { transition: none !important; }
+}
+
 /* ------------------------------------------------------ run filters -- */
 
 .result-filters {

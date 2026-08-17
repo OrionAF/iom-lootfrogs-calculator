@@ -13,6 +13,10 @@ No build step, no dependencies — plain HTML, CSS and JavaScript, ready for Git
   golden frogs shimmer, big/massive frogs are colour-coded, and rare drops get a moment.
   The run total sits directly above the results, so it stays in view no matter how many
   frogs you spawned.
+- **Watch the spawn play out** when you use a single Frogspawn: the column grid opens,
+  base frogs drop in, the 3× and 10× rows roll one column at a time (a hit spawns extras,
+  a miss stamps a red X), then the grid tips every frog into one bowl where they roll Big,
+  Massive and Golden before popping open into loot. See below.
 - **Filter the results** by frog variety and by reward rarity. Selections combine within
   a group (Epic *or* Legendary) and narrow across groups (Golden frogs *and* Legendary
   drops). Filtering searches the whole run rather than the rendered slice, so a hunt for
@@ -128,9 +132,37 @@ css/styles.css      theme, animations
 js/data.js          reward table, stat definitions, icon URLs
 js/sim.js           config building, seeded RNG, the simulation
 js/analytics.js     exact probability maths for the Probabilities tab
+js/theatre.js       the spawn show — column grid, bowl packing, growth, gilding
 js/theme.js         press / newsprint theme toggle
-js/app.js           UI wiring, the spawn animation, saved totals
+js/app.js           UI wiring, results grid, filters, saved totals
 ```
+
+### The spawn show
+
+`js/theatre.js` replays a run that has *already* been simulated — it never rolls anything
+itself, so what you watch always agrees with the totals. It reconstructs the columns from
+each frog's recorded `groupSize` (1 neither, 3 Triple, 10 tenx, 12 both), which is enough
+to know exactly which frogs belong to which row.
+
+It runs only for a **single Frogspawn**. There is one grid per Frogspawn, so 50 of them
+would mean 50 grids and thousands of sprites; bulk runs go straight to the reward grid, as
+do capacities above 60 columns and visitors with `prefers-reduced-motion`. **Skip
+animation** cuts it short at any point.
+
+Grid, bowl and sprite layer share one coordinate space: during the grid phase the grid
+holds the origin, and when it collapses to zero height the bowl inherits it. Falling into
+the bowl is therefore just a change of `transform` — no reparenting and no scroll desync.
+
+Bowl placement is circle packing rather than physics. Each frog is the circle **inscribed
+in its sprite box** — an invisible collision border, so frogs nest by their outline instead
+of colliding as rectangles, and the art is never cropped. The solver relaxes overlaps and
+clamps to the bowl, and CSS transitions carry frogs to the result; re-packing after each
+growth step is what makes a frog swelling to Massive visibly shove its neighbours aside.
+
+Sprites are the wiki's 66 Lootfrog portraits, each with a gilded twin at the same index, so
+a frog keeps its identity when Golden lands. Native art is 32×33, drawn at 48×50 basic,
+122×126 Big and 256×264 Massive; on a screen too narrow for a 256px frog every size shrinks
+by one shared factor so the proportions hold.
 
 ### Look and feel
 
