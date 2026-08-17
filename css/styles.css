@@ -866,7 +866,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   position: relative;
   overflow: hidden;
   opacity: 0;
-  transition: opacity .3s, height .5s cubic-bezier(.4, 0, .2, 1);
+  transition: opacity .33s, height .55s cubic-bezier(.4, 0, .2, 1);
 }
 
 .theatre-grid.is-in { opacity: 1; }
@@ -945,7 +945,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
     repeating-linear-gradient(90deg, var(--rule-soft) 0 1px, transparent 1px 22px),
     var(--sunk);
   opacity: 0;
-  transition: height .55s cubic-bezier(.2, .8, .3, 1), opacity .3s;
+  transition: height .6s cubic-bezier(.2, .8, .3, 1), opacity .33s;
 }
 
 .theatre-bowl.is-open { opacity: 1; border-top-width: var(--hair); }
@@ -967,7 +967,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   top: 0;
   width: 0;
   height: 0;
-  transition: transform .5s cubic-bezier(.2, .8, .3, 1);
+  transition: transform .55s cubic-bezier(.2, .8, .3, 1);
   will-change: transform;
 }
 
@@ -980,12 +980,16 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
   /* The collision shape is the circle inscribed in this box — see
      packCircles — but it stays invisible: no clipping, so hats and tails
      are never cropped, and frogs nest rather than colliding as rectangles. */
-  transition: width .45s cubic-bezier(.2, .8, .3, 1), height .45s cubic-bezier(.2, .8, .3, 1);
+  transition: width .5s cubic-bezier(.2, .8, .3, 1), height .5s cubic-bezier(.2, .8, .3, 1);
 }
 
 .tf.is-hidden { opacity: 0; }
-.tf.is-drop { animation: frogDrop .3s ease-out both; }
-.tf.is-falling { transition: transform .85s cubic-bezier(.3, .05, .2, 1); }
+
+/* Between Frogspawn: the previous catch steps out of the cells but stays in
+   the layer, so the mass drop into the bowl still comes from the grid. */
+.tf.is-stowed { opacity: 0; transition: opacity .3s, transform .55s cubic-bezier(.2, .8, .3, 1); }
+.tf.is-drop { animation: frogDrop .33s ease-out both; }
+.tf.is-falling { transition: transform .94s cubic-bezier(.3, .05, .2, 1); }
 
 @keyframes frogDrop {
   from { opacity: 0; }
@@ -999,7 +1003,7 @@ textarea { font-size: .8rem; resize: vertical; line-height: 1.5; }
 
 /* Popping animates the image, never the .tf anchor — the anchor's transform
    is the sprite's position and must not be clobbered by a keyframe. */
-.tf.is-pop img { animation: frogPop .36s cubic-bezier(.3, .9, .4, 1) both; }
+.tf.is-pop img { animation: frogPop .4s cubic-bezier(.3, .9, .4, 1) both; }
 
 @keyframes frogPop {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }

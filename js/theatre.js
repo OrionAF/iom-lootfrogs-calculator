@@ -48,18 +48,31 @@
   var BOWL_PAD = 16;
   var PACK_FILL = 2.1;      // slack over raw circle area so packing can settle
   var PACK_ITERATIONS = 240;
-  var PACK_PAD = 1.5;       // absorbs the rounding in place(), so no visible kiss
+  var PACK_PAD = 2.5;       // absorbs the rounding in place(), so no visible kiss
+  var PACK_EPS = 0.6;       // settled enough to stop relaxing
+
+  /* One dial for the whole show: above 1 slows everything down. */
+  var SPEED = 1.1;
 
   var T = {
     grid: 420,
-    base: 45,
-    roll: 66,
-    settle: 260,
     fall: 950,
     grow: 640,
     gild: 640,
     pop: 700
   };
+  Object.keys(T).forEach(function (k) { T[k] = Math.round(T[k] * SPEED); });
+
+  /* Natural per-column tempo: one Frogspawn always plays at this pace. */
+  var STEP_BASE = Math.round(45 * SPEED);
+  var STEP_ROLL = Math.round(66 * SPEED);
+  var STEP_SETTLE = Math.round(260 * SPEED);
+
+  /* The grid cycles once per Frogspawn, so several would otherwise take
+     several times as long. Past the budget the cycles compress, down to a
+     floor that keeps each one readable. */
+  var GRID_BUDGET = Math.round(6000 * SPEED);
+  var USE_MIN = Math.round(430 * SPEED);
 
   var timers = [];
   var running = false;
@@ -79,6 +92,23 @@
    * the column won — 1 neither, 3 Triple, 10 tenx, 12 both — and the frogs
    * are stored base-first, so the split back out is unambiguous.
    */
+  /**
+   * Split a run into its Frogspawn uses, keeping each one's offset into the
+   * flat frog list so a column index can still reach the right sprite.
+   */
+  function toUses(frogs) {
+    var uses = [];
+    var current = null;
+    for (var i = 0; i < frogs.length; i++) {
+      if (!current || frogs[i].use !== current.use) {
+        current = { use: frogs[i].use, offset: i, frogs: [] };
+        uses.push(current);
+      }
+      current.frogs.push(frogs[i]);
+    }
+    return uses;
+  }
+
   function toColumns(frogs) {
     var columns = [];
     var i = 0;
@@ -157,7 +187,9 @@
        claim space before the small ones settle avoids stranding one. */
     var order = bodies.slice().sort(function (m, n) { return n.pr - m.pr; });
 
+    var worst;
     for (iter = 0; iter < PACK_ITERATIONS; iter++) {
+      worst = 0;
       for (i = 0; i < order.length; i++) {
         a = order[i];
         for (j = i + 1; j < order.length; j++) {
@@ -167,6 +199,7 @@
           d = Math.sqrt(dx * dx + dy * dy);
           overlap = a.pr + b.pr - d;
           if (overlap <= 0) continue;
+          if (overlap > worst) worst = overlap;
           if (d < 0.0001) { dx = rand() - 0.5; dy = rand() - 0.5; d = 1; }
           push = overlap / d / 2;
           a.px -= dx * push;
@@ -180,6 +213,10 @@
         a.px = Math.max(a.pr, Math.min(Math.max(a.pr, width - a.pr), a.px));
         a.py = Math.max(a.pr, Math.min(Math.max(a.pr, height - a.pr), a.py));
       }
+      /* Stop as soon as the layout has settled. The fixed iteration count
+         was the bottleneck at scale, and the remaining slack lives in
+         PACK_PAD, which also absorbs the rounding in place(). */
+      if (worst < PACK_EPS) break;
     }
   }
 
@@ -241,8 +278,8 @@
 
   /**
    * @param {Object} opts
-   *   run    simulated run whose `frogs` belong to a single use
-   *   els    { root, inner, grid, bowl, frogs, phase }
+   *   run    simulated run; every Frogspawn in it cycles through one grid
+   *   els    { root, stage, inner, grid, bowl, frogs, phase }
    *   rand   optional RNG for bowl scatter
    *   onDone called once, whether the show ran out or was skipped
    */
@@ -253,7 +290,10 @@
     var els = opts.els;
     var rand = opts.rand || Math.random;
     var frogs = opts.run.frogs;
-    var columns = toColumns(frogs);
+    var uses = toUses(frogs);
+    /* Every Frogspawn rolls the same number of columns, so the first one
+       sizes the grid and the rest reuse it. */
+    var columns = toColumns(uses[0].frogs);
     var done = opts.onDone || function () {};
 
     /* Unhide before measuring — a hidden card reports zero width, which would
@@ -347,7 +387,31 @@
       place(sprite, x, y);
     }
 
+    /* Wipe the hit/miss marks so the same grid can roll the next Frogspawn. */
+    function clearMarks() {
+      cells.forEach(function (cell) {
+        Object.keys(cell.byRow).forEach(function (key) {
+          var el = cell.byRow[key];
+          el.classList.remove('is-hit', 'is-miss');
+          var x = el.querySelector('.tg-x');
+          if (x) el.removeChild(x);
+        });
+      });
+    }
+
     /* ================================ script ============================= */
+
+    /* A single Frogspawn runs at the natural tempo. More than one compresses
+       to fit the budget, but never below the floor that keeps a cycle
+       readable — so the show grows with use count, just far more slowly. */
+    var natural = columns.length * (STEP_BASE + 2 * STEP_ROLL) + 2 * STEP_SETTLE;
+    var scale = Math.min(1, GRID_BUDGET / (natural * uses.length));
+    scale = Math.max(scale, Math.min(1, USE_MIN / natural));
+
+    var baseStep = Math.max(4, Math.round(STEP_BASE * scale));
+    var rollStep = Math.max(4, Math.round(STEP_ROLL * scale));
+    var settle = Math.max(40, Math.round(STEP_SETTLE * scale));
+    var many = uses.length > 1;
 
     var t = 0;
 
@@ -355,44 +419,60 @@
     els.grid.classList.add('is-in');
     t += T.grid;
 
-    /* 2 — base frogs, left to right */
-    later(function () { phase('Spawning the base Lootfrogs'); }, t);
-    cells.forEach(function (cell, c) {
+    uses.forEach(function (use, u) {
+      var cols = toColumns(use.frogs);
+      var label = many ? 'Frogspawn ' + (u + 1) + '/' + uses.length + ' · ' : '';
+
+      /* Reset the grid, and stow the previous Frogspawn's frogs so the cells
+         are free. They stay in the layer, just invisible, ready to drop. */
       later(function () {
-        var off = clusterOffsets(1, colW, ROW_BASE)[0];
-        reveal(sprites[cell.col.start], cell.left + off.x, rows.base.top + off.y);
-      }, t + c * T.base);
-    });
-    t += columns.length * T.base + T.settle;
+        clearMarks();
+        if (u > 0) {
+          var prev = uses[u - 1];
+          for (var i = 0; i < prev.frogs.length; i++) {
+            sprites[prev.offset + i].el.classList.add('is-stowed');
+          }
+        }
+        phase(label + 'Spawning the base Lootfrogs');
+      }, t);
 
-    /* 3 and 4 — the two multi-spawn rows, each column in turn */
-    [
-      { key: 'triple', label: 'Rolling the 3× row', at: 'tripleAt', count: 2 },
-      { key: 'tenx', label: 'Rolling the 10× row', at: 'tenxAt', count: 9 }
-    ].forEach(function (row) {
-      later(function () { phase(row.label); }, t);
-      cells.forEach(function (cell, c) {
+      cols.forEach(function (col, c) {
         later(function () {
-          var cellEl = cell.byRow[row.key];
-          if (!cell.col[row.key]) {
-            cellEl.classList.add('is-miss');
-            cellEl.appendChild(cross());
-            return;
-          }
-          cellEl.classList.add('is-hit');
-          var offs = clusterOffsets(row.count, colW, rows[row.key].h);
-          for (var k = 0; k < row.count; k++) {
-            reveal(sprites[cell.col[row.at] + k],
-              cell.left + offs[k].x, rows[row.key].top + offs[k].y);
-          }
-        }, t + c * T.roll);
+          var off = clusterOffsets(1, colW, ROW_BASE)[0];
+          reveal(sprites[use.offset + col.start], cells[c].left + off.x, rows.base.top + off.y);
+        }, t + c * baseStep);
       });
-      t += columns.length * T.roll + T.settle;
+      t += cols.length * baseStep + settle;
+
+      [
+        { key: 'triple', text: 'Rolling the 3× row', at: 'tripleAt', count: 2 },
+        { key: 'tenx', text: 'Rolling the 10× row', at: 'tenxAt', count: 9 }
+      ].forEach(function (row) {
+        later(function () { phase(label + row.text); }, t);
+        cols.forEach(function (col, c) {
+          later(function () {
+            var cellEl = cells[c].byRow[row.key];
+            if (!col[row.key]) {
+              cellEl.classList.add('is-miss');
+              cellEl.appendChild(cross());
+              return;
+            }
+            cellEl.classList.add('is-hit');
+            var offs = clusterOffsets(row.count, colW, rows[row.key].h);
+            for (var k = 0; k < row.count; k++) {
+              reveal(sprites[use.offset + col[row.at] + k],
+                cells[c].left + offs[k].x, rows[row.key].top + offs[k].y);
+            }
+          }, t + c * rollStep);
+        });
+        t += cols.length * rollStep + settle;
+      });
     });
 
-    /* 5 — collapse the grid, everything falls into one bowl */
+    /* 5 — collapse the grid; every Frogspawn's catch drops in together */
     later(function () {
       phase('Tipping ' + frogs.length + ' Lootfrogs into the bowl');
+      sprites.forEach(function (s) { s.el.classList.remove('is-stowed'); });
       els.root.classList.add('is-bowl');
       els.grid.style.height = '0px';
       els.bowl.classList.add('is-open');

@@ -24,7 +24,10 @@
 
   function paint(btn, mode) {
     var icon = document.getElementById('motionIcon');
-    if (icon) icon.textContent = mode === 'off' ? '‖' : '▶';
+    /* Two bars rather than U+23F8: it sits in the same Unicode block as the
+       play triangle, so both render as monochrome text instead of one of
+       them turning into a colour emoji. */
+    if (icon) icon.textContent = mode === 'off' ? '▮▮' : '▶';
     btn.setAttribute('aria-pressed', String(mode === 'on'));
     btn.setAttribute('title', mode === 'on'
       ? 'Animation is on — click to turn it off'

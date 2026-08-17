@@ -342,10 +342,17 @@
 
   /* ======================================================== theatre ===== */
 
-  /* The show is one grid per Frogspawn, so it only makes sense for a single
-     use — 50 Frogspawn would be 50 grids and thousands of sprites. Bulk runs
-     keep the fast cascade. */
+  /* Every Frogspawn cycles through the same grid, so several is fine — but
+     the bowl packs every frog at once and the sprites are all real DOM, so
+     the show is capped on the expected total rather than on the use count. */
   var THEATRE_MAX_COLUMNS = 60;
+  /* Packing is O(n^2) per growth step, so this is set where the worst case
+     stays a blink rather than a hitch — roughly 11 Frogspawn at capacity 19. */
+  var THEATRE_MAX_FROGS = 320;
+
+  function theatreFrogEstimate(cfg, uses) {
+    return An.expectedFrogsPerUse(cfg) * uses;
+  }
 
   function theatreEls() {
     return {
@@ -366,17 +373,20 @@
 
   function wantsTheatre(cfg, uses) {
     return !!Theatre &&
-      uses === 1 &&
       cfg.capacity <= THEATRE_MAX_COLUMNS &&
+      theatreFrogEstimate(cfg, uses) <= THEATRE_MAX_FROGS &&
       motionEnabled();
   }
 
   function theatreSkipReason(cfg, uses) {
     if (!Theatre) return '';
     if (!motionEnabled()) return 'Motion is switched off in the header.';
-    if (uses !== 1) return 'Set this to 1 to watch the spawn play out.';
     if (cfg.capacity > THEATRE_MAX_COLUMNS) {
       return 'Capacity above ' + THEATRE_MAX_COLUMNS + ' is too wide to animate.';
+    }
+    if (theatreFrogEstimate(cfg, uses) > THEATRE_MAX_FROGS) {
+      return 'That is too many frogs to animate — around ' +
+        fmtInt(THEATRE_MAX_FROGS / An.expectedFrogsPerUse(cfg)) + ' Frogspawn is the most the show handles.';
     }
     return '';
   }

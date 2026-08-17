@@ -145,11 +145,21 @@ itself, so what you watch always agrees with the totals. It reconstructs the col
 each frog's recorded `groupSize` (1 neither, 3 Triple, 10 tenx, 12 both), which is enough
 to know exactly which frogs belong to which row.
 
-It runs only for a **single Frogspawn**. There is one grid per Frogspawn, so 50 of them
-would mean 50 grids and thousands of sprites; bulk runs go straight to the reward grid, as
-do capacities above 60 columns and anyone who has switched **Motion** off. **Skip
-animation** cuts it short at any point. Whenever the show is skipped the launch note says
-why, rather than leaving you to guess.
+**Several Frogspawn share one grid.** Rather than drawing a grid each, every Frogspawn
+cycles through the same one: the marks are wiped, the rows re-roll, and the catch is stowed
+out of the cells before the next one starts. When the last has rolled, every frog from
+every Frogspawn drops into the bowl together. The phase label reads `Frogspawn 3/8` so you
+always know where you are.
+
+Cycles share a time budget, so eight Frogspawn is not eight times the wait — one runs at
+the natural tempo (~9s end to end), sixteen at ~13s, compressing only as far as a floor
+that keeps each cycle readable.
+
+The show is capped by expected **frog count**, not use count, since the bowl packs every
+frog at once — about 11 Frogspawn at capacity 19. Past that, or above 60 columns, or with
+**Motion** switched off, the run goes straight to the reward grid, and the launch note says
+which of those applied rather than leaving you to guess. **Skip animation** cuts it short
+at any point.
 
 Grid, bowl and sprite layer share one coordinate space: during the grid phase the grid
 holds the origin, and when it collapses to zero height the bowl inherits it. Falling into
@@ -160,6 +170,11 @@ in its sprite box** — an invisible collision border, so frogs nest by their ou
 of colliding as rectangles, and the art is never cropped. The solver relaxes overlaps and
 clamps to the bowl, and CSS transitions carry frogs to the result; re-packing after each
 growth step is what makes a frog swelling to Massive visibly shove its neighbours aside.
+
+Relaxation stops as soon as the layout settles rather than running a fixed number of
+passes. That matters at scale: the pass count, not the pair loop, was the bottleneck, and
+the early exit took the worst case from ~2.1s to a few hundred ms without letting a single
+overlap through.
 
 Sprites are the wiki's 66 Lootfrog portraits, each with a gilded twin at the same index, so
 a frog keeps its identity when Golden lands. Native art is 32×33, drawn at 48×50 basic,
