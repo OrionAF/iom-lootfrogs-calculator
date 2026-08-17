@@ -3,14 +3,23 @@
 
    Spawn model
    -----------
-   A Frogspawn fills the screen to Lootfrog Capacity. Frogs arrive in spawn
-   groups: each group rolls 10x first, then triple, otherwise a single frog.
-   Group size is decided BEFORE any size roll, so a Big/Massive frog can
-   never itself multi-spawn. Every frog in the group then independently
-   rolls Big -> Massive and Golden.
+   Think of it as one column per base spawn. A Frogspawn opens exactly
+   Lootfrog Capacity columns, and each column resolves three rows:
 
-   The last group always spawns in full, so a lucky 10x at the end can push
-   you past capacity.
+     row 1  the base Lootfrog                        +1  (always)
+     row 2  the 10x roll        hit +9, miss +0
+     row 3  the Triple roll     hit +2, miss +0
+
+   Rows 2 and 3 are INDEPENDENT, so one column can win both and yield
+   1 + 9 + 2 = 12 frogs. Column sizes are therefore 1, 3, 10 or 12.
+
+   Extras never open a column of their own: they do not consume capacity
+   and they never roll for a multi-spawn, so nothing cascades. Capacity 19
+   with four Triples is 19 + 4*2 = 27 frogs.
+
+   The columns are then tipped into one bowl, and every frog in it rolls
+   independently for Golden, and for Big -> Massive, and pulls its own
+   reward. Nothing there depends on which column a frog came from.
    ========================================================================= */
 (function (global) {
   'use strict';
@@ -135,11 +144,14 @@
     };
   }
 
-  /* Group size for one spawn: 10x is rolled first, then triple. */
+  /* Frogs from one column: the base frog, plus two independent multi-spawn
+     rolls. Both can hit, so the result is 1, 3, 10 or 12. Extras never
+     re-roll, so this runs exactly once per column. */
   function rollGroupSize(cfg, rng) {
-    if (rng() < cfg.tenxChance) return 10;
-    if (rng() < cfg.tripleChance) return 3;
-    return 1;
+    var size = 1;
+    if (rng() < cfg.tenxChance) size += 9;
+    if (rng() < cfg.tripleChance) size += 2;
+    return size;
   }
 
   /* --------------------------------------------------------------- loot -- */
@@ -177,13 +189,15 @@
 
   /* ---------------------------------------------------------------- run -- */
 
-  /** One Frogspawn: spawn groups until capacity is filled. */
+  /**
+   * One Frogspawn: open `capacity` columns, resolve each, tip them all into
+   * the same bowl. Capacity counts columns, not frogs — extras ride on top
+   * of it, which is why a 19-capacity Frogspawn can hand you 27 frogs.
+   */
   function simulateUse(cfg, rng, useIndex) {
     var frogs = [];
-    var spawned = 0;
-    var guard = 0;
 
-    while (spawned < cfg.capacity && guard++ < 100000) {
+    for (var column = 0; column < cfg.capacity; column++) {
       var size = rollGroupSize(cfg, rng);
       for (var i = 0; i < size; i++) {
         var frog = rollFrog(cfg, rng);
@@ -202,7 +216,6 @@
           capped: loot.capped
         });
       }
-      spawned += size;
     }
     return frogs;
   }

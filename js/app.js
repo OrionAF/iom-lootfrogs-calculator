@@ -254,10 +254,10 @@
   function renderLaunchNote(cfg) {
     var uses = spawnCountValue();
     var perUse = An.expectedFrogsPerUse(cfg);
-    var note = 'Each Frogspawn fills the screen to <b>' + cfg.capacity + '</b> lootfrog' +
+    var note = 'Each Frogspawn rolls <b>' + cfg.capacity + '</b> base spawn' +
       (cfg.capacity === 1 ? '' : 's') +
       (perUse > cfg.capacity + 1e-9
-        ? ' — about <b>' + fmtNum(perUse) + '</b> on average once multi-spawn overflow is counted'
+        ? ' — about <b>' + fmtNum(perUse) + '</b> lootfrogs once 10x and Triple extras are counted'
         : '') + '. ';
     note += 'Using <b>' + fmtInt(uses) + '</b> means roughly <b>' + fmtInt(uses * perUse) + '</b> frogs.';
     if (uses * perUse > RENDER_CAP) {
@@ -857,7 +857,7 @@
     var kpis = [
       {
         k: 'Lootfrogs per Frogspawn', v: fmtNum(s.frogsPerUse), cls: 'good',
-        sub: 'capacity ' + cfg.capacity + ', with overflow'
+        sub: cfg.capacity + ' base spawns, plus multi-spawn extras'
       },
       {
         k: 'Frogspawn returned', v: fmtNum(s.frogspawnReturned),
@@ -877,8 +877,8 @@
         sub: fmtNum(s.perFrog.gems) + ' per frog'
       },
       {
-        k: 'Average spawn group', v: fmtNum(s.expectedGroupSize), cls: '',
-        sub: fmtPct(cfg.tenxChance) + ' 10x · ' + fmtPct((1 - cfg.tenxChance) * cfg.tripleChance) + ' triple'
+        k: 'Frogs per base spawn', v: fmtNum(s.expectedGroupSize), cls: '',
+        sub: fmtPct(cfg.tenxChance) + ' 10x and ' + fmtPct(cfg.tripleChance) + ' triple, rolled separately'
       }
     ];
 

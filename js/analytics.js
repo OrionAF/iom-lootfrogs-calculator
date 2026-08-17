@@ -39,15 +39,18 @@
 
   /* ------------------------------------------------- frogs per Frogspawn -- */
 
-  /** Distribution of one spawn group's size. */
+  /**
+   * Frogs produced by one column. The 10x and Triple rolls are independent,
+   * so all four combinations exist and the mean is 1 + 9*p10 + 2*p3.
+   */
   function groupSizeDistribution(cfg) {
     var p10 = cfg.tenxChance;
-    var p3 = (1 - p10) * cfg.tripleChance;
-    var p1 = 1 - p10 - p3;
+    var p3 = cfg.tripleChance;
     return [
-      { size: 1, p: p1 },
-      { size: 3, p: p3 },
-      { size: 10, p: p10 }
+      { size: 1, p: (1 - p10) * (1 - p3) },
+      { size: 3, p: (1 - p10) * p3 },
+      { size: 10, p: p10 * (1 - p3) },
+      { size: 12, p: p10 * p3 }
     ].filter(function (g) { return g.p > 0; });
   }
 
@@ -57,25 +60,14 @@
 
   /**
    * Expected frogs spawned by one Frogspawn.
-   * Exact via backward recursion on remaining capacity:
-   *   f(r) = SUM_k p_k * (k + f(max(0, r - k))),  f(r <= 0) = 0
-   * The last group is never truncated, so the answer sits above capacity
-   * whenever multi-spawn is possible.
+   *
+   * Capacity is a count of columns, and each one independently yields
+   * E[column size] frogs, so the whole thing is just a product — no filling
+   * recursion, because extras never occupy a column and never roll for a
+   * multi-spawn of their own.
    */
   function expectedFrogsPerUse(cfg) {
-    var groups = groupSizeDistribution(cfg);
-    var f = new Array(cfg.capacity + 1);
-    f[0] = 0;
-    for (var r = 1; r <= cfg.capacity; r++) {
-      var total = 0;
-      for (var i = 0; i < groups.length; i++) {
-        var k = groups[i].size;
-        var rest = r - k > 0 ? f[r - k] : 0;
-        total += groups[i].p * (k + rest);
-      }
-      f[r] = total;
-    }
-    return f[cfg.capacity];
+    return cfg.capacity * expectedGroupSize(cfg);
   }
 
   /* ------------------------------------------------------ reward maths -- */

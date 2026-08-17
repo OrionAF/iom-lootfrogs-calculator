@@ -42,13 +42,30 @@ present so nothing gets filtered.
 
 ### Spawning
 
-A Frogspawn fills the screen to your **Lootfrog Capacity**. Frogs arrive in spawn groups:
-each group rolls **10x** first, then **Triple**, otherwise a single frog. Group size is
-locked in *before* any size roll, so a Big or Massive frog never multi-spawns. Every frog
-in the group then independently rolls **Big → Massive**, and **Golden** separately.
+Picture one **column** per base spawn. A Frogspawn opens exactly **Lootfrog Capacity**
+columns, and each column resolves three rows:
 
-Because the last group can be a 10x and is never truncated, a Frogspawn can slightly
-overshoot capacity.
+| Row | Roll        | Hit | Miss |
+| --- | ----------- | --- | ---- |
+| 1   | base frog   | +1  | —    |
+| 2   | 10x spawn   | +9  | +0   |
+| 3   | Triple spawn| +2  | +0   |
+
+Rows 2 and 3 are **independent** — one column can win both, for `1 + 9 + 2 = 12` frogs.
+So a column yields 1, 3, 10 or 12 frogs, with mean `1 + 9×P(10x) + 2×P(triple)`.
+
+The extras are the part worth being precise about:
+
+- They do **not** open a column of their own, so they never consume capacity. Capacity
+  counts columns, not frogs on screen, and a Frogspawn routinely hands you well over it.
+- They do **not** roll for a multi-spawn themselves, so nothing cascades.
+
+Capacity 19 with four Triples is therefore `19 + 4×2 = 27` frogs, and expected frogs per
+Frogspawn is simply `capacity × E[column size]`.
+
+The columns are then tipped into one bowl. Every frog in it independently rolls **Big →
+Massive** and **Golden**, and pulls its own reward — none of which depends on the column
+it came from, so the frog that triggered a 10x is no more or less likely to be Big.
 
 ### Multipliers
 
