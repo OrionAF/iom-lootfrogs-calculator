@@ -5,25 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Frogspawn Loot Calculator</title>
 <meta name="description" content="Simulate Frogspawn loot and study Lootfrog drop odds for Idle Ore Miner.">
+<meta name="theme-color" content="#0d0f0b">
 <link rel="preconnect" href="https://static.wikitide.net">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" href="https://static.wikitide.net/shminerwiki/5/5f/Frogspawn.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,600..800&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="css/styles.css">
+<script>
+  /* Paint the stored theme before first paint so the page never flashes. */
+  try {
+    var t = localStorage.getItem('frogspawn.theme');
+    if (t) document.documentElement.setAttribute('data-theme', t);
+  } catch (e) { /* noop */ }
+</script>
 </head>
 <body>
 
-<div class="bg-glow" aria-hidden="true"></div>
+<div class="bg-grain" aria-hidden="true"></div>
 
 <header class="app-header">
+  <div class="ticker" aria-hidden="true">
+    <div class="wrap">
+      <div class="ticker-inner">
+        <span>Idle Ore Miner</span>
+        <span>Lootfrog Bureau</span>
+        <span>Odds computed exactly, not sampled</span>
+        <span>House always spawns</span>
+      </div>
+    </div>
+  </div>
+
   <div class="wrap header-inner">
     <div class="brand">
       <img class="brand-icon" data-fallback="🥚" src="https://static.wikitide.net/shminerwiki/5/5f/Frogspawn.png" alt="">
-      <div>
+      <div class="brand-text">
         <h1>Frogspawn Loot Calculator</h1>
-        <p class="tagline">Pop the spawn. Count the frogs. Do the maths.</p>
+        <p class="tagline">Pop the spawn · Count the frogs · Do the maths</p>
       </div>
     </div>
     <div class="header-actions">
-      <button type="button" class="ghost-btn" id="soundToggle" aria-pressed="false" title="Toggle sound effects">
+      <button type="button" class="ghost-btn small" id="themeToggle" title="Switch between press and newsprint">
+        <span class="icon-slot" id="themeIcon">◐</span><span class="btn-text">Theme</span>
+      </button>
+      <button type="button" class="ghost-btn small" id="soundToggle" aria-pressed="false" title="Toggle sound effects">
         <span class="icon-slot" data-on="🔊" data-off="🔇">🔇</span><span class="btn-text">Sound</span>
       </button>
     </div>
@@ -94,15 +119,22 @@
 
   <!-- =============================== TABS ============================== -->
   <nav class="tabs" role="tablist" aria-label="Sections">
-    <button type="button" role="tab" class="tab is-active" data-tab="sim" aria-selected="true" aria-controls="tab-sim">🎰 Simulator</button>
-    <button type="button" role="tab" class="tab" data-tab="vault" aria-selected="false" aria-controls="tab-vault">💰 Saved Totals <span class="tab-badge" id="vaultBadge" hidden>0</span></button>
-    <button type="button" role="tab" class="tab" data-tab="odds" aria-selected="false" aria-controls="tab-odds">📊 Probabilities</button>
+    <button type="button" role="tab" class="tab is-active" data-tab="sim" aria-selected="true" aria-controls="tab-sim">
+      <span class="tab-index" aria-hidden="true">01</span>Simulator
+    </button>
+    <button type="button" role="tab" class="tab" data-tab="vault" aria-selected="false" aria-controls="tab-vault">
+      <span class="tab-index" aria-hidden="true">02</span>Saved Totals <span class="tab-badge" id="vaultBadge" hidden>0</span>
+    </button>
+    <button type="button" role="tab" class="tab" data-tab="odds" aria-selected="false" aria-controls="tab-odds">
+      <span class="tab-index" aria-hidden="true">03</span>Probabilities
+    </button>
   </nav>
 
   <!-- ============================ SIMULATOR ============================ -->
   <section class="tab-panel is-active" id="tab-sim" role="tabpanel">
 
     <div class="card launch-card">
+      <p class="eyebrow"><span class="no">01</span> Pull the lever</p>
       <div class="launch-row">
         <label class="field spawn-field">
           <span class="field-label">Frogspawn to use</span>
@@ -123,7 +155,7 @@
       <div class="results-head">
         <h2>Lootfrogs <span class="count-pill" id="frogProgress"></span></h2>
         <div class="results-actions">
-          <button type="button" class="primary-btn small" id="saveBtn" disabled>💾 Save results</button>
+          <button type="button" class="primary-btn small" id="saveBtn" disabled>Save results</button>
           <button type="button" class="ghost-btn small" id="clearRunBtn">Clear</button>
         </div>
       </div>
@@ -131,12 +163,12 @@
       <div class="frog-grid" id="frogGrid" aria-live="polite"></div>
 
       <div class="run-totals card" id="runTotals" hidden>
-        <h3>Run total</h3>
+        <p class="eyebrow"><span class="no">02</span> Run total</p>
         <div class="totals-grid" id="runTotalsGrid"></div>
       </div>
     </div>
 
-    <p class="empty-state" id="simEmpty">Set your stats above, then use a Frogspawn to see what crawls out. 🐸</p>
+    <p class="empty-state" id="simEmpty">Set your stats above, then use a Frogspawn<br>to see what crawls out.</p>
   </section>
 
   <!-- ============================== VAULT ============================== -->
@@ -166,12 +198,14 @@
   <!-- ============================== ODDS =============================== -->
   <section class="tab-panel" id="tab-odds" role="tabpanel">
     <div class="card">
+      <p class="eyebrow"><span class="no">01</span> Headline figures</p>
       <h2>Per-Frogspawn expectations</h2>
       <p class="hint">Exact maths from your stats — no sampling. Recalculates as you edit.</p>
       <div class="kpi-grid" id="oddsKpis"></div>
     </div>
 
     <div class="card">
+      <p class="eyebrow"><span class="no">02</span> Varieties</p>
       <h2>Frog spectrum</h2>
       <p class="hint">Chance of each variety per spawned frog, its total loot multiplier, and how many you should expect per Frogspawn.</p>
       <div class="table-scroll">
@@ -183,11 +217,13 @@
     </div>
 
     <div class="card">
+      <p class="eyebrow"><span class="no">03</span> Yield</p>
       <h2>Expected yield per Frogspawn</h2>
       <div class="totals-grid" id="oddsYield"></div>
     </div>
 
     <div class="card">
+      <p class="eyebrow"><span class="no">04</span> Reward table</p>
       <h2>Reward table by frog type</h2>
       <p class="hint">Drop chance is identical for every frog; the quantities are what change. Capped rewards show how often the multiplier is wasted.</p>
       <div class="type-picker" id="typePicker" role="tablist" aria-label="Frog type"></div>
@@ -202,6 +238,7 @@
     </div>
 
     <div class="card notes">
+      <p class="eyebrow"><span class="no">05</span> Method</p>
       <h2>How this is modelled</h2>
       <ul id="assumptions">
         <li><strong>Spawn order.</strong> Each spawn group rolls 10x first, then Triple, else a single frog. Group size is locked in before any size roll, so Big and Massive frogs never multi-spawn.</li>
@@ -217,8 +254,9 @@
 </main>
 
 <footer class="app-footer">
-  <div class="wrap">
-    <p>Fan-made calculator. Item art from the Idle Ore Miner wiki. Not affiliated with the game.</p>
+  <div class="wrap footer-inner">
+    <p class="colophon">Frogspawn Loot Calculator — fan-made</p>
+    <p>Item art from the Idle Ore Miner wiki · Not affiliated with the game</p>
   </div>
 </footer>
 
@@ -227,6 +265,7 @@
 <script src="js/data.js"></script>
 <script src="js/sim.js"></script>
 <script src="js/analytics.js"></script>
+<script src="js/theme.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

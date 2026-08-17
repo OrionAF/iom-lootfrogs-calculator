@@ -107,8 +107,25 @@ css/styles.css      theme, animations
 js/data.js          reward table, stat definitions, icon URLs
 js/sim.js           config building, seeded RNG, the simulation
 js/analytics.js     exact probability maths for the Probabilities tab
+js/theme.js         press / newsprint theme toggle
 js/app.js           UI wiring, the spawn animation, saved totals
 ```
+
+### Look and feel
+
+The interface is styled as printed matter — hairline rules instead of glow, a
+second ink plate printed off-register instead of blurred drop shadows, a
+halftone dot ground, square corners throughout, and one acid ink carrying the
+whole accent load. Type is Bricolage Grotesque for display, Space Grotesk for
+running text, and DM Mono for every number.
+
+It ships in two stocks: **press** (dark ink, the default) and **newsprint**
+(light). The toggle in the header stores your choice in `localStorage`; with
+nothing stored it follows `prefers-color-scheme`. Every colour is a custom
+property on `:root`, so a theme is a variable swap and nothing more.
+
+Fonts load from Google Fonts, so an offline copy falls back to system faces —
+the layout holds either way.
 
 `js/sim.js` and `js/analytics.js` are free of DOM access, so they can be loaded and
 exercised outside a browser.
