@@ -4,8 +4,10 @@
    Motion is ON by default for everyone, including visitors whose OS asks
    for reduced motion: most people who turn Windows animations off did it
    for battery or performance and still want to watch the spawn. The switch
-   in the header is the single source of truth, and it is deliberately an
-   opt-OUT rather than an opt-in.
+   in the launch row is the single source of truth, and it is deliberately an
+   opt-OUT rather than an opt-in. It sits beside Show speed because that is
+   the control it governs — flipping it off is a decision about the spawn
+   show, and the show is what the launch card is for.
 
    The choice lives on <html data-motion>, so CSS can silence every
    animation and the simulator can decide whether to run the spawn show,
@@ -23,15 +25,21 @@
   }
 
   function paint(btn, mode) {
-    var icon = document.getElementById('motionIcon');
-    /* Two bars rather than U+23F8: it sits in the same Unicode block as the
-       play triangle, so both render as monochrome text instead of one of
-       them turning into a colour emoji. */
-    if (icon) icon.textContent = mode === 'off' ? '▮▮' : '▶';
-    btn.setAttribute('aria-pressed', String(mode === 'on'));
-    btn.setAttribute('title', mode === 'on'
+    var on = mode === 'on';
+    /* The word is the state, never the action: a play/pause glyph flips its
+       meaning depending on which one the reader assumes, and a paused page
+       showing pause bars is exactly where that goes wrong. The title carries
+       the action instead, where there is room to spell it out. */
+    var state = document.getElementById('motionState');
+    if (state) state.textContent = on ? 'On' : 'Off';
+    btn.setAttribute('aria-checked', String(on));
+    btn.setAttribute('title', on
       ? 'Animation is on — click to turn it off'
       : 'Animation is off — click to turn it on');
+
+    /* Show speed times a show that is not going to play. */
+    var speed = document.getElementById('optSpeed');
+    if (speed) speed.disabled = !on;
   }
 
   function init() {

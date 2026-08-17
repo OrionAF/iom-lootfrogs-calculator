@@ -219,15 +219,20 @@ property on `:root`, so a theme is a variable swap and nothing more.
 
 ### Motion
 
-**Motion** in the header is the single switch governing whether anything moves — the spawn
-show and every CSS transition alike, via `:root[data-motion]`.
+**Motion** is the single switch governing whether anything moves — the spawn show and every
+CSS transition alike, via `:root[data-motion]`. It sits in the launch row beside **Show
+speed**, the control it gates, rather than off in the header among the site chrome.
+
+It reads its state as a word, `On` or `Off`. A play/pause glyph cannot say both what the
+state is and what the click will do, and the ambiguity bites hardest in the paused state,
+where pause bars look like a page still waiting to be paused.
 
 It is deliberately **on by default for everyone, including visitors whose OS reports
 `prefers-reduced-motion`**, and is an opt-out rather than an opt-in. The reasoning: most
 people who turn Windows animation effects off did so for battery or performance and still
-want to watch the spawn, and a visible off switch in the header is easier to find than the
-OS setting is to reconsider. That is a deliberate trade — the usual advice is to honour the
-OS preference by default — so the switch is kept prominent and its state persists.
+want to watch the spawn, and a visible off switch next to the lever is easier to find than
+the OS setting is to reconsider. That is a deliberate trade — the usual advice is to honour
+the OS preference by default — so the switch is kept prominent and its state persists.
 
 Fonts load from Google Fonts, so an offline copy falls back to system faces —
 the layout holds either way.

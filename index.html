@@ -54,9 +54,6 @@
       </div>
     </div>
     <div class="header-actions">
-      <button type="button" class="ghost-btn small" id="motionToggle" aria-pressed="true" title="Animation is on — click to turn it off">
-        <span class="icon-slot" id="motionIcon">▶</span><span class="btn-text">Motion</span><!-- ▮▮ when paused -->
-      </button>
       <button type="button" class="ghost-btn small" id="themeToggle" title="Switch between press and newsprint">
         <span class="icon-slot" id="themeIcon">◐</span><span class="btn-text">Theme</span>
       </button>
@@ -139,6 +136,16 @@
           <span class="field-label">Gem bonus <span class="unit">%</span></span>
           <input type="number" id="optGemBonus" value="0" min="0" max="200" step="10" inputmode="numeric">
         </label>
+        <!-- Not a <label>: the switch is the control, and a label wrapping a
+             button would swallow the click. -->
+        <div class="field spawn-field motion-field">
+          <span class="field-label" id="motionLabel">Motion</span>
+          <button type="button" class="switch" id="motionToggle" role="switch" aria-checked="true"
+                  aria-labelledby="motionLabel" title="Animation is on — click to turn it off">
+            <span class="switch-track" aria-hidden="true"></span>
+            <span class="switch-state" id="motionState">On</span>
+          </button>
+        </div>
         <label class="field spawn-field">
           <span class="field-label">Show speed</span>
           <select id="optSpeed">

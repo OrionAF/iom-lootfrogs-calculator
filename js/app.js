@@ -371,7 +371,7 @@
     };
   }
 
-  /* The header switch, not the OS preference — see js/motion.js. */
+  /* The launch-row switch, not the OS preference — see js/motion.js. */
   function motionEnabled() {
     return document.documentElement.getAttribute('data-motion') !== 'off';
   }
@@ -385,7 +385,7 @@
 
   function theatreSkipReason(cfg, uses) {
     if (!Theatre) return '';
-    if (!motionEnabled()) return 'Motion is switched off in the header.';
+    if (!motionEnabled()) return 'Motion is switched off, so the show is skipped.';
     if (cfg.capacity > THEATRE_MAX_COLUMNS) {
       return 'Capacity above ' + THEATRE_MAX_COLUMNS + ' is too wide to animate.';
     }
